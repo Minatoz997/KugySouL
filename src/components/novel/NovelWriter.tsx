@@ -24,10 +24,16 @@ interface NovelProject {
   createdAt: Date;
 }
 
+interface FizzoNovel {
+  id: string;
+  title: string;
+}
+
 interface FizzoSettings {
   email: string;
   password: string;
   rememberCredentials: boolean;
+  selectedNovelId?: string;
 }
 
 interface FizzoUploadHistory {
@@ -66,12 +72,15 @@ export default function NovelWriter() {
   const [fizzoSettings, setFizzoSettings] = useState<FizzoSettings>({
     email: '',
     password: '',
-    rememberCredentials: false
+    rememberCredentials: false,
+    selectedNovelId: undefined
   });
   const [fizzoUploadHistory, setFizzoUploadHistory] = useState<FizzoUploadHistory[]>([]);
   const [isUploadingToFizzo, setIsUploadingToFizzo] = useState(false);
   const [showFizzoHistory, setShowFizzoHistory] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [fizzoNovels, setFizzoNovels] = useState<FizzoNovel[]>([]);
+  const [isLoadingNovels, setIsLoadingNovels] = useState(false);
 
   const createNewProject = () => {
     const newProject: NovelProject = {
@@ -469,6 +478,58 @@ Continue writing:`;
       console.error('Failed to load Fizzo settings:', error);
     }
   };
+  
+  const fetchFizzoNovels = async () => {
+    if (!fizzoSettings.email || !fizzoSettings.password) {
+      alert('Please configure your Fizzo credentials first!');
+      setShowFizzoSettings(true);
+      return;
+    }
+    
+    setIsLoadingNovels(true);
+    
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://minatoz997-backend66.hf.space'}/api/fizzo-list-novel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: fizzoSettings.email,
+          password: fizzoSettings.password
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success && Array.isArray(result.data)) {
+          setFizzoNovels(result.data);
+          
+          // If we have novels but no selection, select the first one
+          if (result.data.length > 0 && !fizzoSettings.selectedNovelId) {
+            setFizzoSettings(prev => ({
+              ...prev,
+              selectedNovelId: result.data[0].id
+            }));
+          }
+          
+          return result.data;
+        } else {
+          throw new Error(result.error || 'Failed to retrieve novel list');
+        }
+      } else {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to retrieve novel list');
+      }
+    } catch (error) {
+      console.error('Failed to fetch Fizzo novels:', error);
+      alert(`❌ Failed to fetch novels from Fizzo:\n\n${error instanceof Error ? error.message : 'Unknown error'}`);
+      return [];
+    } finally {
+      setIsLoadingNovels(false);
+    }
+  };
 
   const uploadToFizzo = async () => {
     if (!editorContent.trim()) {
@@ -533,7 +594,8 @@ Continue writing:`;
           email: fizzoSettings.email,
           password: fizzoSettings.password,
           chapter_title: chapterTitle,
-          chapter_content: editorContent
+          chapter_content: editorContent,
+          novel_id: fizzoSettings.selectedNovelId
         })
       });
 
@@ -643,6 +705,13 @@ Continue writing:`;
       localStorage.setItem('fizzo_upload_history', JSON.stringify(fizzoUploadHistory));
     }
   }, [fizzoUploadHistory]);
+  
+  // Fetch novels when settings modal is opened and we have credentials
+  useEffect(() => {
+    if (showFizzoSettings && fizzoSettings.email && fizzoSettings.password && fizzoNovels.length === 0) {
+      fetchFizzoNovels();
+    }
+  }, [showFizzoSettings, fizzoSettings.email, fizzoSettings.password]);
 
   if (!isWriting) {
     return (
@@ -900,20 +969,30 @@ Continue writing:`;
                   Share
                 </Button>
                 
-                {/* Fizzo Upload Button */}
-                <Button 
-                  onClick={uploadToFizzo} 
-                  size="sm" 
-                  disabled={isUploadingToFizzo || !editorContent.trim()}
-                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0"
-                >
-                  {isUploadingToFizzo ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Upload className="w-4 h-4 mr-2" />
+                {/* Fizzo Upload Section */}
+                <div className="flex flex-col gap-1">
+                  {fizzoSettings.selectedNovelId && fizzoNovels.length > 0 && (
+                    <div className="text-xs text-orange-300 flex items-center gap-1 mb-1">
+                      <BookOpen className="w-3 h-3" />
+                      <span>
+                        Novel: {fizzoNovels.find(n => n.id === fizzoSettings.selectedNovelId)?.title || 'Unknown'}
+                      </span>
+                    </div>
                   )}
-                  {isUploadingToFizzo ? 'Uploading...' : 'Upload to Fizzo'}
-                </Button>
+                  <Button 
+                    onClick={uploadToFizzo} 
+                    size="sm" 
+                    disabled={isUploadingToFizzo || !editorContent.trim()}
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0"
+                  >
+                    {isUploadingToFizzo ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    {isUploadingToFizzo ? 'Uploading...' : 'Upload to Fizzo'}
+                  </Button>
+                </div>
 
                 {/* Fizzo Settings Button */}
                 <Button 
@@ -1379,6 +1458,41 @@ Continue writing:`;
                     placeholder="Your Fizzo password"
                   />
                 </div>
+                
+                {fizzoNovels.length > 0 && (
+                  <div>
+                    <div className="flex justify-between items-center">
+                      <label className="text-gray-300 text-sm mb-2 block">Select Novel</label>
+                      <button 
+                        onClick={() => fetchFizzoNovels()}
+                        className="text-orange-400 hover:text-orange-300 text-xs flex items-center gap-1"
+                      >
+                        {isLoadingNovels ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                            <path d="M3 3v5h5"></path>
+                            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                            <path d="M16 21h5v-5"></path>
+                          </svg>
+                        )}
+                        {isLoadingNovels ? 'Loading...' : 'Refresh'}
+                      </button>
+                    </div>
+                    <select
+                      value={fizzoSettings.selectedNovelId}
+                      onChange={(e) => setFizzoSettings(prev => ({ ...prev, selectedNovelId: e.target.value }))}
+                      className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white text-sm"
+                    >
+                      {fizzoNovels.map(novel => (
+                        <option key={novel.id} value={novel.id}>
+                          {novel.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2">
                   <input
@@ -1399,6 +1513,21 @@ Continue writing:`;
                     We never send them to our servers - only directly to Fizzo.org for authentication.
                   </p>
                 </div>
+                
+                {!fizzoNovels.length && fizzoSettings.email && fizzoSettings.password && (
+                  <Button
+                    onClick={fetchFizzoNovels}
+                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 flex items-center justify-center gap-2"
+                    disabled={isLoadingNovels}
+                  >
+                    {isLoadingNovels ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <BookOpen className="w-4 h-4" />
+                    )}
+                    {isLoadingNovels ? 'Loading Novels...' : 'Get My Novels from Fizzo'}
+                  </Button>
+                )}
               </div>
 
               <div className="flex gap-3 mt-6">
