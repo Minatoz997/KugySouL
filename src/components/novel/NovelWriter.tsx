@@ -492,16 +492,23 @@ Continue writing:`;
 
     setIsLoadingNovels(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://minatoz997-backend66.hf.space'}/api/fizzo-list-novel?email=${encodeURIComponent(fizzoSettings.email)}&password=${encodeURIComponent(fizzoSettings.password)}`, {
-        method: 'GET',
+      console.log('🔍 Fetching real novels from Fizzo.org...');
+      
+      // Use POST method to send credentials securely in body
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://minatoz997-backend66.hf.space'}/api/fizzo-list-novel`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({
+          email: fizzoSettings.email,
+          password: fizzoSettings.password
+        })
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📚 Fetched novels:', data);
+        console.log('📚 Fetched novels from Fizzo.org:', data);
         
         // Handle different response formats
         const novels = data.novels || data.data || data || [];
@@ -509,6 +516,8 @@ Continue writing:`;
         
         if (novels.length === 0) {
           alert('No novels found in your Fizzo account. Please create a novel on Fizzo.org first.');
+        } else {
+          console.log(`✅ Successfully loaded ${novels.length} novels from your Fizzo.org account`);
         }
       } else {
         const error = await response.json();
