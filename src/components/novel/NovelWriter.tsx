@@ -39,6 +39,23 @@ interface FizzoUploadHistory {
   fizzoUrl?: string;
 }
 
+interface FizzoNovel {
+  id: string;
+  title: string;
+  description?: string;
+  chapters_count: number;
+  last_updated?: string;
+  url?: string;
+  status?: string;
+}
+
+interface UploadConfirmation {
+  selectedNovel: FizzoNovel;
+  chapterTitle: string;
+  chapterContent: string;
+  wordCount: number;
+}
+
 export default function NovelWriter() {
   const [projects, setProjects] = useState<NovelProject[]>([]);
   const [currentProject, setCurrentProject] = useState<NovelProject | null>(null);
@@ -72,6 +89,14 @@ export default function NovelWriter() {
   const [isUploadingToFizzo, setIsUploadingToFizzo] = useState(false);
   const [showFizzoHistory, setShowFizzoHistory] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  
+  // Novel Selection States
+  const [fizzoNovels, setFizzoNovels] = useState<FizzoNovel[]>([]);
+  const [selectedNovel, setSelectedNovel] = useState<FizzoNovel | null>(null);
+  const [isLoadingNovels, setIsLoadingNovels] = useState(false);
+  const [showNovelSelector, setShowNovelSelector] = useState(false);
+  const [showUploadConfirmation, setShowUploadConfirmation] = useState(false);
+  const [uploadConfirmation, setUploadConfirmation] = useState<UploadConfirmation | null>(null);
 
   const createNewProject = () => {
     const newProject: NovelProject = {
@@ -458,6 +483,45 @@ Continue writing:`;
     setShowFizzoSettings(false);
   };
 
+  const fetchFizzoNovels = async () => {
+    if (!fizzoSettings.email || !fizzoSettings.password) {
+      alert('Please configure your Fizzo credentials first!');
+      setShowFizzoSettings(true);
+      return;
+    }
+
+    setIsLoadingNovels(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://minatoz997-backend66.hf.space'}/api/fizzo-list-novel?email=${encodeURIComponent(fizzoSettings.email)}&password=${encodeURIComponent(fizzoSettings.password)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📚 Fetched novels:', data);
+        
+        // Handle different response formats
+        const novels = data.novels || data.data || data || [];
+        setFizzoNovels(novels);
+        
+        if (novels.length === 0) {
+          alert('No novels found in your Fizzo account. Please create a novel on Fizzo.org first.');
+        }
+      } else {
+        const error = await response.json();
+        throw new Error(error.detail || error.message || 'Failed to fetch novels');
+      }
+    } catch (error) {
+      console.error('Failed to fetch Fizzo novels:', error);
+      alert(`❌ Failed to fetch your novels from Fizzo:\n\n${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease check your credentials and try again.`);
+    } finally {
+      setIsLoadingNovels(false);
+    }
+  };
+
   const loadFizzoSettings = () => {
     try {
       const saved = localStorage.getItem('fizzo_settings');
@@ -470,7 +534,7 @@ Continue writing:`;
     }
   };
 
-  const uploadToFizzo = async () => {
+  const startUploadFlow = async () => {
     if (!editorContent.trim()) {
       alert('Please write some content before uploading to Fizzo!');
       return;
@@ -493,18 +557,51 @@ Continue writing:`;
       return;
     }
 
-    setIsUploadingToFizzo(true);
-    setUploadProgress(0);
+    // Fetch novels and show selector
+    await fetchFizzoNovels();
+    setShowNovelSelector(true);
+  };
 
-    // Create upload history entry
-    const uploadId = Date.now().toString();
+  const confirmUpload = () => {
+    if (!selectedNovel) {
+      alert('Please select a novel to upload to!');
+      return;
+    }
+
     const chapterTitle = currentProject?.title ? 
       `${currentProject.title} - Chapter ${(currentProject.chapters?.length || 0) + 1}` : 
       'Untitled Chapter';
 
+    setUploadConfirmation({
+      selectedNovel,
+      chapterTitle,
+      chapterContent: editorContent,
+      wordCount: countWords(editorContent)
+    });
+
+    setShowNovelSelector(false);
+    setShowUploadConfirmation(true);
+  };
+
+  const uploadToFizzo = async () => {
+    if (!uploadConfirmation) return;
+
+    setIsUploadingToFizzo(true);
+    setUploadProgress(0);
+    setShowUploadConfirmation(false);
+
+    // Create upload history entry
+    const uploadId = Date.now().toString();
+    const { selectedNovel, chapterTitle, chapterContent } = uploadConfirmation;
+
+    if (!selectedNovel) {
+      console.error('No novel selected for upload');
+      return;
+    }
+
     const newUpload: FizzoUploadHistory = {
       id: uploadId,
-      chapterTitle,
+      chapterTitle: `${selectedNovel.title} - ${chapterTitle}`,
       uploadDate: new Date(),
       status: 'uploading'
     };
@@ -523,7 +620,7 @@ Continue writing:`;
         });
       }, 200);
 
-      // Call backend API
+      // Call backend API with novel selection
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://minatoz997-backend66.hf.space'}/api/fizzo-auto-update`, {
         method: 'POST',
         headers: {
@@ -532,8 +629,9 @@ Continue writing:`;
         body: JSON.stringify({
           email: fizzoSettings.email,
           password: fizzoSettings.password,
+          novel_id: selectedNovel.id,
           chapter_title: chapterTitle,
-          chapter_content: editorContent
+          chapter_content: chapterContent
         })
       });
 
@@ -556,7 +654,7 @@ Continue writing:`;
           )
         );
 
-        alert(`✅ Chapter uploaded to Fizzo successfully!\n\n📖 Title: ${chapterTitle}\n🔗 Check your Fizzo account for the published chapter.`);
+        alert(`✅ Chapter uploaded to Fizzo successfully!\n\n📚 Novel: ${selectedNovel.title}\n📖 Chapter: ${chapterTitle}\n🔗 Check your Fizzo account for the published chapter.`);
       } else {
         const error = await response.json();
         throw new Error(error.detail || 'Upload failed');
@@ -581,6 +679,7 @@ Continue writing:`;
     } finally {
       setIsUploadingToFizzo(false);
       setUploadProgress(0);
+      resetUploadFlow();
     }
   };
 
@@ -589,6 +688,13 @@ Continue writing:`;
       setFizzoUploadHistory([]);
       localStorage.removeItem('fizzo_upload_history');
     }
+  };
+
+  const resetUploadFlow = () => {
+    setSelectedNovel(null);
+    setUploadConfirmation(null);
+    setShowNovelSelector(false);
+    setShowUploadConfirmation(false);
   };
 
   // Auto-save functionality
@@ -902,17 +1008,19 @@ Continue writing:`;
                 
                 {/* Fizzo Upload Button */}
                 <Button 
-                  onClick={uploadToFizzo} 
+                  onClick={startUploadFlow} 
                   size="sm" 
-                  disabled={isUploadingToFizzo || !editorContent.trim()}
+                  disabled={isUploadingToFizzo || !editorContent.trim() || isLoadingNovels}
                   className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0"
                 >
                   {isUploadingToFizzo ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : isLoadingNovels ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Upload className="w-4 h-4 mr-2" />
                   )}
-                  {isUploadingToFizzo ? 'Uploading...' : 'Upload to Fizzo'}
+                  {isUploadingToFizzo ? 'Uploading...' : isLoadingNovels ? 'Loading...' : 'Upload to Fizzo'}
                 </Button>
 
                 {/* Fizzo Settings Button */}
@@ -1529,6 +1637,179 @@ Continue writing:`;
                   className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                 >
                   Close
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Novel Selector Modal */}
+      <AnimatePresence>
+        {showNovelSelector && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowNovelSelector(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gradient-to-br from-slate-900 to-purple-900 rounded-2xl p-6 w-full max-w-2xl border border-white/20 max-h-[80vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Select Novel</h3>
+                  <p className="text-gray-400 text-sm">Choose which novel to upload your chapter to</p>
+                </div>
+              </div>
+
+              {isLoadingNovels ? (
+                <div className="text-center py-8">
+                  <Loader2 className="w-12 h-12 text-orange-500 mx-auto mb-3 animate-spin" />
+                  <p className="text-gray-400">Loading your novels from Fizzo...</p>
+                </div>
+              ) : fizzoNovels.length === 0 ? (
+                <div className="text-center py-8">
+                  <BookOpen className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                  <p className="text-gray-400 mb-2">No novels found</p>
+                  <p className="text-gray-500 text-sm">Create a novel on Fizzo.org first, then try again</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto mb-6">
+                  {fizzoNovels.map((novel) => (
+                    <div
+                      key={novel.id}
+                      onClick={() => setSelectedNovel(novel)}
+                      className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                        selectedNovel?.id === novel.id
+                          ? 'bg-orange-500/20 border-orange-500/50 ring-2 ring-orange-500/30'
+                          : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="text-white font-medium mb-1">{novel.title}</h4>
+                          {novel.description && (
+                            <p className="text-gray-400 text-sm mb-2 line-clamp-2">{novel.description}</p>
+                          )}
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span>📚 {novel.chapters_count} chapters</span>
+                            {novel.last_updated && (
+                              <span>🕒 Updated {new Date(novel.last_updated).toLocaleDateString()}</span>
+                            )}
+                            {novel.status && (
+                              <span className={`px-2 py-1 rounded ${
+                                novel.status === 'published' ? 'bg-green-500/20 text-green-300' : 'bg-gray-500/20 text-gray-300'
+                              }`}>
+                                {novel.status}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {selectedNovel?.id === novel.id && (
+                          <CheckCircle className="w-5 h-5 text-orange-500 flex-shrink-0 ml-3" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowNovelSelector(false)}
+                  variant="outline"
+                  className="flex-1 border-white/20 text-white hover:bg-white/10"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmUpload}
+                  disabled={!selectedNovel}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Continue
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Upload Confirmation Modal */}
+      <AnimatePresence>
+        {showUploadConfirmation && uploadConfirmation && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowUploadConfirmation(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gradient-to-br from-slate-900 to-purple-900 rounded-2xl p-6 w-full max-w-lg border border-white/20"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                  <Upload className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Confirm Upload</h3>
+                  <p className="text-gray-400 text-sm">Review your chapter before uploading</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <h4 className="text-white font-medium mb-2">📚 Target Novel</h4>
+                  <p className="text-gray-300">{uploadConfirmation.selectedNovel.title}</p>
+                  <p className="text-gray-500 text-sm">
+                    {uploadConfirmation.selectedNovel.chapters_count} existing chapters
+                  </p>
+                </div>
+
+                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <h4 className="text-white font-medium mb-2">📖 Chapter Details</h4>
+                  <p className="text-gray-300 mb-1">{uploadConfirmation.chapterTitle}</p>
+                  <p className="text-gray-500 text-sm">
+                    {uploadConfirmation.wordCount.toLocaleString()} words • {uploadConfirmation.chapterContent.length.toLocaleString()} characters
+                  </p>
+                </div>
+
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
+                  <p className="text-orange-300 text-sm">
+                    ⚠️ <strong>Important:</strong> This will add a new chapter to &quot;{uploadConfirmation.selectedNovel.title}&quot; on Fizzo.org. 
+                    Make sure you&apos;ve selected the correct novel.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowUploadConfirmation(false)}
+                  variant="outline"
+                  className="flex-1 border-white/20 text-white hover:bg-white/10"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={uploadToFizzo}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Chapter
                 </Button>
               </div>
             </motion.div>
