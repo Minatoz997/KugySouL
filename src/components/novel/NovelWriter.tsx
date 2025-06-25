@@ -333,10 +333,16 @@ Keep suggestions constructive and actionable:`,
   };
 
   const autoPilotWrite = async () => {
-    if (isGenerating || !currentProject || !currentChapter) return;
+    if (isGenerating || !currentProject || !currentChapter) {
+      console.log('🚫 AutoPilot skipped:', { isGenerating, hasProject: !!currentProject, hasChapter: !!currentChapter });
+      return;
+    }
     
-    // Check if current chapter is complete (1800-2000 words)
-    if (chapterWordCount >= 1800) {
+    console.log(`🚀 AutoPilot running: ${chapterWordCount}/2000 words`);
+    
+    // Check if current chapter is complete (2000+ words)
+    if (chapterWordCount >= 2000) {
+      console.log('📖 Chapter complete, creating new chapter...');
       // Complete current chapter and create new one
       await completeCurrentChapter();
       return;
@@ -349,7 +355,7 @@ Keep suggestions constructive and actionable:`,
         : 'Write in English language. ';
       
       const remainingWords = 2000 - chapterWordCount;
-      const isChapterEnding = remainingWords <= 400; // Start wrapping up when close to limit
+      const isChapterEnding = remainingWords <= 200; // Start wrapping up when very close to limit
       
       let promptText = '';
       
@@ -420,7 +426,11 @@ Continue writing:`;
         max_tokens: 600
       });
       
+      console.log('📝 API Response:', response);
+      
       const newContent = response.response || response.message || response.content || response.data || '';
+      
+      console.log('✍️ New content length:', newContent.length, 'words:', countWords(newContent));
       
       if (newContent && newContent.trim()) {
         const updatedContent = editorContent ? editorContent + '\n\n' + newContent : newContent;
@@ -434,10 +444,13 @@ Continue writing:`;
         saveCurrentChapter(updatedContent, newWordCount);
         
         console.log(`✅ Chapter ${currentProject.currentChapterIndex + 1}: ${newWordCount}/2000 words`);
+      } else {
+        console.warn('⚠️ No content received from API');
       }
     } catch (error) {
       console.error('Auto-pilot writing failed:', error);
-      stopAutoPilot();
+      // Don't stop autopilot immediately, just log the error and continue
+      // The interval will try again in the next cycle
     } finally {
       setIsGenerating(false);
     }
