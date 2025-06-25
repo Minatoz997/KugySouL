@@ -1,5 +1,5 @@
 export const config = {
-  apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://minatoz997-backend66.hf.space',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'https://minatoz997-backend66.hf.space',
   wsUrl: process.env.NEXT_PUBLIC_WS_URL || 'wss://minatoz997-backend66.hf.space',
   appName: 'OpenHands AI',
   appDescription: 'Powerful AI agent that can execute code, browse the web, and interact with various tools',
