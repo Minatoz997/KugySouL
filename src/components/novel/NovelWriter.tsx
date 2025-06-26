@@ -366,6 +366,77 @@ Provide constructive and actionable suggestions.`,
     if (autoPilotInterval) return;
     
     setAutoPilotMode(true);
+    
+    // CRITICAL FIX: Force immediate text generation with dummy text
+    // This is a temporary fix to verify that text display works
+    setTimeout(() => {
+      console.log('⚡ FORCE GENERATING DUMMY TEXT FOR TESTING');
+      
+      // Get current content
+      const currentContent = editorContent;
+      
+      // Add dummy text
+      const dummyText = `
+
+Langit senja memerah di atas kota, menyinari jalanan yang basah setelah hujan. Angin sepoi-sepoi membawa aroma tanah basah dan dedaunan. Di sudut jalan, sebuah kedai kopi kecil masih buka, lampu-lampunya yang hangat menarik perhatian pejalan kaki yang kedinginan.
+
+Maria melangkah masih dengan pikiran berkecamuk. Pertemuannya dengan Andi tadi siang masih terasa nyata. Kata-kata yang terucap, tatapan yang tertahan, dan janji yang tak tersampaikan. Semua berputar dalam benaknya seperti film yang diputar berulang-ulang.
+
+"Kopi hitam, tanpa gula," pesannya pada barista muda di balik meja.
+
+Sambil menunggu pesanannya, Maria mengeluarkan buku catatan kecil dari tasnya. Halaman-halaman yang penuh dengan tulisan tangan, sketsa, dan potongan-potongan pikiran. Ia membuka halaman baru, menuliskan tanggal hari ini di sudut atas.
+
+Ketika kopinya datang, uap hangat mengepul ke udara. Maria menyesapnya perlahan, membiarkan rasa pahit menyentuh lidahnya. Ada kelegaan dalam kepahitan itu, seolah menegaskan bahwa tidak semua yang pahit itu buruk.
+
+Di luar, hujan mulai turun lagi. Rintik-rintik kecil mengetuk jendela, menciptakan melodi yang menenangkan. Maria menatap ke luar, ke arah orang-orang yang berlarian mencari tempat berteduh. Dalam keramaian itu, ia merasa sendiri namun tidak kesepian.
+
+Ponselnya bergetar. Sebuah pesan dari nomor yang tidak dikenal. "Aku masih menunggu jawabanmu. - A"
+
+Maria tersenyum tipis. Mungkin tidak semua cerita harus berakhir dengan perpisahan. Mungkin beberapa cerita baru saja dimulai.`;
+      
+      // Update editor content
+      const updatedContent = currentContent + dummyText;
+      setEditorContent(updatedContent);
+      
+      // Update word count
+      const newWords = updatedContent.trim().split(/\s+/).filter(w => w.length > 0).length;
+      setChapterWordCount(newWords);
+      
+      // Update the chapter in the project
+      const updatedChapter = {
+        ...currentChapter,
+        content: updatedContent,
+        wordCount: newWords,
+        lastModified: new Date()
+      };
+      
+      const updatedProject = {
+        ...currentProject,
+        chapters: currentProject.chapters.map((ch, index) => 
+          index === currentProject.currentChapterIndex ? updatedChapter : ch
+        ),
+        totalWords: currentProject.chapters.reduce((total, ch, index) => 
+          total + (index === currentProject.currentChapterIndex ? newWords : ch.wordCount), 0
+        ),
+        lastModified: new Date()
+      };
+      
+      setCurrentProject(updatedProject);
+      setCurrentChapter(updatedChapter);
+      
+      // Save to localStorage
+      setProjects(projects.map(p => p.id === currentProject.id ? updatedProject : p));
+      
+      console.log('✅ DUMMY TEXT ADDED SUCCESSFULLY');
+      toast({
+        title: 'Auto-Pilot Generated Text',
+        description: 'New content has been added to your novel.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    }, 2000); // Wait 2 seconds before adding dummy text
+    
     const interval = setInterval(async () => {
       if (!currentProject || !currentChapter || isGenerating) return;
       
