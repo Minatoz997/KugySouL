@@ -267,7 +267,15 @@ export default function NovelWriter() {
         max_tokens: 800
       });
       
-      setGeneratedContent(response.response || response.message || 'AI generated content will appear here...');
+      // The backend returns the AI response in the "response" field as per OpenHands-Backend
+      setGeneratedContent(response.response || 'AI generated content will appear here...');
+      
+      console.log('AI Generation Response:', {
+        status: response.status,
+        model: response.model,
+        conversationId: response.conversation_id,
+        responseLength: response.response?.length || 0
+      });
     } catch (error) {
       console.error('AI generation failed:', error);
       setGeneratedContent('Sorry, AI generation is currently unavailable. Please try again later.');
@@ -299,7 +307,15 @@ Write ONLY the NEXT section (4-6 substantial paragraphs, 800-1200 words) that na
         max_tokens: 800
       });
       
-      setGeneratedContent(response.response || response.message || 'AI continuation will appear here...');
+      // The backend returns the AI response in the "response" field as per OpenHands-Backend
+      setGeneratedContent(response.response || 'AI continuation will appear here...');
+      
+      console.log('Continue Writing Response:', {
+        status: response.status,
+        model: response.model,
+        conversationId: response.conversation_id,
+        responseLength: response.response?.length || 0
+      });
     } catch (error) {
       console.error('AI continuation failed:', error);
       setGeneratedContent('Sorry, AI continuation is currently unavailable. Please try again later.');
@@ -328,7 +344,15 @@ Provide constructive and actionable suggestions.`,
         max_tokens: 600
       });
       
-      setAiSuggestions(response.response || response.message || 'AI suggestions will appear here...');
+      // The backend returns the AI response in the "response" field as per OpenHands-Backend
+      setAiSuggestions(response.response || 'AI suggestions will appear here...');
+      
+      console.log('Get Suggestions Response:', {
+        status: response.status,
+        model: response.model,
+        conversationId: response.conversation_id,
+        responseLength: response.response?.length || 0
+      });
     } catch (error) {
       console.error('AI suggestions failed:', error);
       setAiSuggestions('Sorry, AI suggestions are currently unavailable. Please try again later.');
@@ -422,10 +446,12 @@ ABSOLUTE RULES:
 🚫 DO NOT start with "Chapter" or "Bab"
 🚫 DO NOT summarize what happened
 🚫 DO NOT change character names
+🚫 DO NOT include any meta-text like "Here's the continuation" or "The story continues"
 ✅ START with what happens NEXT
 ✅ Continue the same scene/action
 ✅ Add new dialogue, events, descriptions
 ✅ Move the story FORWARD
+✅ Maintain consistent tone and style
 
 ${languageInstruction}
 
@@ -448,6 +474,7 @@ BEGIN CONTINUATION NOW:`;
           max_tokens: 800 // Optimized for 500-600 words per cycle (4 cycles to reach 2000 words)
         });
         
+        // Log the response structure from the backend
         console.log('📥 Received response:', {
           status: response.status,
           responseLength: response.response?.length || 0,
@@ -455,16 +482,21 @@ BEGIN CONTINUATION NOW:`;
           fullResponse: response
         });
         
-        const newContent = response.response || response.message || '';
+        // The backend returns the AI response in the "response" field as per OpenHands-Backend/openhands/server/routes/openrouter_chat.py
+        const newContent = response.response || '';
+        
+        // Log detailed information about the extracted content
         console.log('🔍 AUTO-PILOT: Content extraction result', {
           hasContent: !!newContent.trim(),
           contentLength: newContent.length,
           contentPreview: newContent.substring(0, 200),
           responseFields: {
             hasResponse: !!response.response,
-            hasMessage: !!response.message,
             responseLength: response.response?.length || 0,
-            messageLength: response.message?.length || 0
+            conversationId: response.conversation_id,
+            model: response.model,
+            timestamp: response.timestamp,
+            status: response.status
           }
         });
         
@@ -501,11 +533,11 @@ BEGIN CONTINUATION NOW:`;
           // COMPLETELY DISABLE similarity check for auto-pilot to prevent content rejection
           console.log(`🔍 Similarity check: ${(similarity * 100).toFixed(1)}% (threshold: ${(similarityThreshold * 100).toFixed(1)}%)`);
           console.log(`📝 Content length: ${cleanedContent.length} characters`);
-          console.log(`🤖 Auto-pilot active: ${isAutoPilotActive}`);
+          console.log(`🤖 Auto-pilot active: ${autoPilotMode}`);
           
           // For auto-pilot: Accept ALL content to prevent rewriting loops
           // For manual: Use similarity check
-          const shouldAcceptContent = isAutoPilotActive ? cleanedContent.length > 30 : (similarity < similarityThreshold && cleanedContent.length > 30);
+          const shouldAcceptContent = autoPilotMode ? cleanedContent.length > 30 : (similarity < similarityThreshold && cleanedContent.length > 30);
           
           if (shouldAcceptContent) {
             // For auto-pilot: FORCE APPEND to prevent any content loss
@@ -549,11 +581,11 @@ BEGIN CONTINUATION NOW:`;
             
             console.log(`Auto-pilot: Added ${cleanedContent.length} characters, new word count: ${newWordCount}`);
           } else {
-            console.log(`❌ Content REJECTED! Similarity: ${(similarity * 100).toFixed(1)}%, Length: ${cleanedContent.length}, Auto-pilot: ${isAutoPilotActive}`);
+            console.log(`❌ Content REJECTED! Similarity: ${(similarity * 100).toFixed(1)}%, Length: ${cleanedContent.length}, Auto-pilot: ${autoPilotMode}`);
             console.log(`🚫 Rejected content preview: "${cleanedContent.substring(0, 100)}..."`);
             
             // For auto-pilot, this should NEVER happen now
-            if (isAutoPilotActive) {
+            if (autoPilotMode) {
               console.error('🚨 AUTO-PILOT CONTENT REJECTED! This should not happen with new logic!');
             }
           }
@@ -578,13 +610,14 @@ BEGIN CONTINUATION NOW:`;
     
     setAutoPilotInterval(interval);
   };
-
+  
   const stopAutoPilot = () => {
     if (autoPilotInterval) {
       clearInterval(autoPilotInterval);
       setAutoPilotInterval(null);
     }
     setAutoPilotMode(false);
+    console.log('Auto-pilot mode stopped');
   };
 
   const insertGeneratedContent = () => {

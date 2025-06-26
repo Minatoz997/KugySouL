@@ -18,19 +18,19 @@ import type {
 
 // Additional interfaces for chat functionality
 interface ChatResponse {
-  response: string  // Backend returns "response", not "message"
-  message?: string  // Fallback for compatibility
-  content?: string  // Additional field for content
-  data?: string     // Additional field for data
-  conversation_id?: string
-  model?: string
-  timestamp?: string
-  status?: string
+  response: string  // Primary field for AI response from OpenHands-Backend
+  message?: string  // Legacy fallback field
+  conversation_id: string
+  model: string
+  timestamp: string
+  status: string
   usage?: {
     prompt_tokens: number
     completion_tokens: number
     total_tokens: number
   }
+  message_count?: number
+  total_tokens?: number
 }
 
 interface ChatServiceInfo {
