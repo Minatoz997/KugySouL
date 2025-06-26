@@ -253,21 +253,68 @@ Write the story now:`;
       
       // Handle different response formats
       if (response && typeof response === 'object') {
+        console.log('📊 Response structure:', Object.keys(response));
+        
         if (response.response && typeof response.response === 'string') {
           setGeneratedContent(response.response);
+          console.log('✅ Content extracted from response.response');
         } else if (response.message && typeof response.message === 'string') {
           setGeneratedContent(response.message);
+          console.log('✅ Content extracted from response.message');
         } else if (response.content && typeof response.content === 'string') {
           setGeneratedContent(response.content);
-        } else if (response.result && response.result.content && typeof response.result.content === 'string') {
-          setGeneratedContent(response.result.content);
+          console.log('✅ Content extracted from response.content');
+        } else if (response.data && typeof response.data === 'string') {
+          setGeneratedContent(response.data);
+          console.log('✅ Content extracted from response.data');
+        } else if (response.result && typeof response.result === 'object') {
+          if (response.result.content && typeof response.result.content === 'string') {
+            setGeneratedContent(response.result.content);
+            console.log('✅ Content extracted from response.result.content');
+          }
+        } else if (response.choices && Array.isArray(response.choices) && response.choices.length > 0) {
+          const choice = response.choices[0];
+          if (choice.message && choice.message.content) {
+            setGeneratedContent(choice.message.content);
+            console.log('✅ Content extracted from response.choices[0].message.content');
+          } else if (choice.text) {
+            setGeneratedContent(choice.text);
+            console.log('✅ Content extracted from response.choices[0].text');
+          }
         } else {
-          setGeneratedContent('AI generated content will appear here...');
+          // Try to extract content from any string property in the response
+          let foundContent = false;
+          for (const key in response) {
+            if (typeof response[key] === 'string' && response[key].length > 50) {
+              setGeneratedContent(response[key]);
+              console.log(`✅ Content extracted from response.${key}`);
+              foundContent = true;
+              break;
+            } else if (typeof response[key] === 'object' && response[key] !== null) {
+              // Look one level deeper
+              for (const nestedKey in response[key]) {
+                if (typeof response[key][nestedKey] === 'string' && response[key][nestedKey].length > 50) {
+                  setGeneratedContent(response[key][nestedKey]);
+                  console.log(`✅ Content extracted from response.${key}.${nestedKey}`);
+                  foundContent = true;
+                  break;
+                }
+              }
+              if (foundContent) break;
+            }
+          }
+          
+          if (!foundContent) {
+            setGeneratedContent('AI generated content will appear here...');
+            console.log('❌ No suitable content found in response');
+          }
         }
       } else if (typeof response === 'string') {
         setGeneratedContent(response);
+        console.log('✅ Response was a string');
       } else {
         setGeneratedContent('AI generated content will appear here...');
+        console.log('❌ Response was not an object or string');
       }
     } catch (error) {
       console.error('AI generation failed:', error);
@@ -308,21 +355,68 @@ Continue writing:`,
       
       // Handle different response formats
       if (response && typeof response === 'object') {
+        console.log('📊 Response structure:', Object.keys(response));
+        
         if (response.response && typeof response.response === 'string') {
           setGeneratedContent(response.response);
+          console.log('✅ Content extracted from response.response');
         } else if (response.message && typeof response.message === 'string') {
           setGeneratedContent(response.message);
+          console.log('✅ Content extracted from response.message');
         } else if (response.content && typeof response.content === 'string') {
           setGeneratedContent(response.content);
-        } else if (response.result && response.result.content && typeof response.result.content === 'string') {
-          setGeneratedContent(response.result.content);
+          console.log('✅ Content extracted from response.content');
+        } else if (response.data && typeof response.data === 'string') {
+          setGeneratedContent(response.data);
+          console.log('✅ Content extracted from response.data');
+        } else if (response.result && typeof response.result === 'object') {
+          if (response.result.content && typeof response.result.content === 'string') {
+            setGeneratedContent(response.result.content);
+            console.log('✅ Content extracted from response.result.content');
+          }
+        } else if (response.choices && Array.isArray(response.choices) && response.choices.length > 0) {
+          const choice = response.choices[0];
+          if (choice.message && choice.message.content) {
+            setGeneratedContent(choice.message.content);
+            console.log('✅ Content extracted from response.choices[0].message.content');
+          } else if (choice.text) {
+            setGeneratedContent(choice.text);
+            console.log('✅ Content extracted from response.choices[0].text');
+          }
         } else {
-          setGeneratedContent('AI continuation will appear here...');
+          // Try to extract content from any string property in the response
+          let foundContent = false;
+          for (const key in response) {
+            if (typeof response[key] === 'string' && response[key].length > 50) {
+              setGeneratedContent(response[key]);
+              console.log(`✅ Content extracted from response.${key}`);
+              foundContent = true;
+              break;
+            } else if (typeof response[key] === 'object' && response[key] !== null) {
+              // Look one level deeper
+              for (const nestedKey in response[key]) {
+                if (typeof response[key][nestedKey] === 'string' && response[key][nestedKey].length > 50) {
+                  setGeneratedContent(response[key][nestedKey]);
+                  console.log(`✅ Content extracted from response.${key}.${nestedKey}`);
+                  foundContent = true;
+                  break;
+                }
+              }
+              if (foundContent) break;
+            }
+          }
+          
+          if (!foundContent) {
+            setGeneratedContent('AI continuation will appear here...');
+            console.log('❌ No suitable content found in response');
+          }
         }
       } else if (typeof response === 'string') {
         setGeneratedContent(response);
+        console.log('✅ Response was a string');
       } else {
         setGeneratedContent('AI continuation will appear here...');
+        console.log('❌ Response was not an object or string');
       }
     } catch (error) {
       console.error('AI continuation failed:', error);
@@ -361,21 +455,68 @@ Keep suggestions constructive and actionable:`,
       
       // Handle different response formats
       if (response && typeof response === 'object') {
+        console.log('📊 Response structure:', Object.keys(response));
+        
         if (response.response && typeof response.response === 'string') {
           setAiSuggestions(response.response);
+          console.log('✅ Content extracted from response.response');
         } else if (response.message && typeof response.message === 'string') {
           setAiSuggestions(response.message);
+          console.log('✅ Content extracted from response.message');
         } else if (response.content && typeof response.content === 'string') {
           setAiSuggestions(response.content);
-        } else if (response.result && response.result.content && typeof response.result.content === 'string') {
-          setAiSuggestions(response.result.content);
+          console.log('✅ Content extracted from response.content');
+        } else if (response.data && typeof response.data === 'string') {
+          setAiSuggestions(response.data);
+          console.log('✅ Content extracted from response.data');
+        } else if (response.result && typeof response.result === 'object') {
+          if (response.result.content && typeof response.result.content === 'string') {
+            setAiSuggestions(response.result.content);
+            console.log('✅ Content extracted from response.result.content');
+          }
+        } else if (response.choices && Array.isArray(response.choices) && response.choices.length > 0) {
+          const choice = response.choices[0];
+          if (choice.message && choice.message.content) {
+            setAiSuggestions(choice.message.content);
+            console.log('✅ Content extracted from response.choices[0].message.content');
+          } else if (choice.text) {
+            setAiSuggestions(choice.text);
+            console.log('✅ Content extracted from response.choices[0].text');
+          }
         } else {
-          setAiSuggestions('AI suggestions will appear here...');
+          // Try to extract content from any string property in the response
+          let foundContent = false;
+          for (const key in response) {
+            if (typeof response[key] === 'string' && response[key].length > 50) {
+              setAiSuggestions(response[key]);
+              console.log(`✅ Content extracted from response.${key}`);
+              foundContent = true;
+              break;
+            } else if (typeof response[key] === 'object' && response[key] !== null) {
+              // Look one level deeper
+              for (const nestedKey in response[key]) {
+                if (typeof response[key][nestedKey] === 'string' && response[key][nestedKey].length > 50) {
+                  setAiSuggestions(response[key][nestedKey]);
+                  console.log(`✅ Content extracted from response.${key}.${nestedKey}`);
+                  foundContent = true;
+                  break;
+                }
+              }
+              if (foundContent) break;
+            }
+          }
+          
+          if (!foundContent) {
+            setAiSuggestions('AI suggestions will appear here...');
+            console.log('❌ No suitable content found in response');
+          }
         }
       } else if (typeof response === 'string') {
         setAiSuggestions(response);
+        console.log('✅ Response was a string');
       } else {
         setAiSuggestions('AI suggestions will appear here...');
+        console.log('❌ Response was not an object or string');
       }
     } catch (error) {
       console.error('AI suggestions failed:', error);
@@ -492,36 +633,55 @@ CONTINUE WRITING FROM WHERE THE STORY LEFT OFF (DO NOT REWRITE EXISTING CONTENT)
           // Try all possible response formats
           if (response.response && typeof response.response === 'string') {
             newContent = response.response;
-            console.log('Content extracted from response.response');
+            console.log('✅ Content extracted from response.response');
           } else if (response.message && typeof response.message === 'string') {
             newContent = response.message;
-            console.log('Content extracted from response.message');
+            console.log('✅ Content extracted from response.message');
           } else if (response.content && typeof response.content === 'string') {
             newContent = response.content;
-            console.log('Content extracted from response.content');
+            console.log('✅ Content extracted from response.content');
           } else if (response.data && typeof response.data === 'string') {
             newContent = response.data;
-            console.log('Content extracted from response.data');
+            console.log('✅ Content extracted from response.data');
           } else if (response.result && typeof response.result === 'object') {
             // Handle backend generate-human-content format
             if (response.result.content && typeof response.result.content === 'string') {
               newContent = response.result.content;
-              console.log('Content extracted from response.result.content');
+              console.log('✅ Content extracted from response.result.content');
             }
           } else if (response.choices && Array.isArray(response.choices) && response.choices.length > 0) {
             // Handle OpenAI/OpenRouter format
             const choice = response.choices[0];
             if (choice.message && choice.message.content) {
               newContent = choice.message.content;
-              console.log('Content extracted from response.choices[0].message.content');
+              console.log('✅ Content extracted from response.choices[0].message.content');
             } else if (choice.text) {
               newContent = choice.text;
-              console.log('Content extracted from response.choices[0].text');
+              console.log('✅ Content extracted from response.choices[0].text');
+            }
+          } else {
+            // Try to extract content from any string property in the response
+            for (const key in response) {
+              if (typeof response[key] === 'string' && response[key].length > 50) {
+                newContent = response[key];
+                console.log(`✅ Content extracted from response.${key}`);
+                break;
+              } else if (typeof response[key] === 'object' && response[key] !== null) {
+                // Look one level deeper
+                for (const nestedKey in response[key]) {
+                  if (typeof response[key][nestedKey] === 'string' && response[key][nestedKey].length > 50) {
+                    newContent = response[key][nestedKey];
+                    console.log(`✅ Content extracted from response.${key}.${nestedKey}`);
+                    break;
+                  }
+                }
+                if (newContent) break;
+              }
             }
           }
         } else if (typeof response === 'string') {
           newContent = response;
-          console.log('Response was a string');
+          console.log('✅ Response was a string');
         }
         
         // If we couldn't extract content, try using the novel writing endpoint
