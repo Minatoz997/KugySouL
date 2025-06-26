@@ -83,4 +83,7 @@ const api = {
   extractContentFromResponse
 };
 
+// Export apiService for backward compatibility with other components
+export const apiService = api;
+
 export default api;
