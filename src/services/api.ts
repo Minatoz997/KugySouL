@@ -197,8 +197,59 @@ export const apiService = {
     max_tokens?: number
     temperature?: number
   }): Promise<ChatResponse> {
-    const response = await api.post(endpoints.chatMessage, data)
-    return response.data
+    try {
+      console.log('🚀 Sending chat message to API:', {
+        endpoint: endpoints.chatMessage,
+        model: data.model,
+        maxTokens: data.max_tokens,
+        messageLength: data.message.length
+      });
+      
+      const response = await api.post(endpoints.chatMessage, data);
+      
+      // Log the raw response for debugging
+      console.log('📥 Raw API response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        data: response.data
+      });
+      
+      // Handle different response formats
+      if (response.data) {
+        // If response.data is a string, wrap it
+        if (typeof response.data === 'string') {
+          console.log('⚠️ API returned string response, wrapping in object');
+          return { 
+            response: response.data,
+            conversation_id: 'unknown',
+            model: data.model || 'unknown',
+            timestamp: new Date().toISOString(),
+            status: 'success'
+          };
+        }
+        
+        // Ensure we have a response field
+        if (!response.data.response && response.data.message) {
+          console.log('⚠️ Moving message field to response field');
+          response.data.response = response.data.message;
+        }
+        
+        return response.data;
+      }
+      
+      throw new Error('Empty response from API');
+    } catch (error) {
+      console.error('❌ Error in sendChatMessage:', error);
+      // Return a fallback response
+      return {
+        response: 'Error: Could not get response from API. Please try again.',
+        conversation_id: 'error',
+        model: data.model || 'unknown',
+        timestamp: new Date().toISOString(),
+        status: 'error'
+      };
+    }
   },
 
   // Get chat service info

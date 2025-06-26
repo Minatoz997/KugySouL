@@ -555,15 +555,43 @@ WRITE THE NEXT ${targetWords} WORDS STARTING IMMEDIATELY AFTER: "${lastSentence}
         });
         
         // Log the response structure from the backend
-        console.log('📥 Received response:', {
+        console.log('📥 DETAILED BACKEND RESPONSE:', {
           status: response.status,
+          responseField: response.response,
+          messageField: response.message,
           responseLength: response.response?.length || 0,
           messageLength: response.message?.length || 0,
-          fullResponse: response
+          fullResponse: JSON.stringify(response)
         });
         
+        // CRITICAL DEBUG: Log the entire response object
+        console.log('🔍 FULL RESPONSE OBJECT:', response);
+        
+        // Check if we have a valid response
+        if (!response.response && !response.message) {
+          console.error('❌ ERROR: No response or message field found in API response!', response);
+        }
+        
         // The backend returns the AI response in the "response" field as per OpenHands-Backend/openhands/server/routes/openrouter_chat.py
-        const newContent = response.response || '';
+        // CRITICAL FIX: Try to get content from either response or message field
+        let newContent = '';
+        
+        if (response.response && typeof response.response === 'string' && response.response.trim().length > 0) {
+          console.log('✅ Using response field for content');
+          newContent = response.response;
+        } else if (response.message && typeof response.message === 'string' && response.message.trim().length > 0) {
+          console.log('⚠️ Falling back to message field for content');
+          newContent = response.message;
+        } else if (response.content && typeof response.content === 'string' && response.content.trim().length > 0) {
+          console.log('⚠️ Falling back to content field for content');
+          newContent = response.content;
+        } else if (typeof response === 'string' && response.trim().length > 0) {
+          console.log('⚠️ Response is a string, using directly');
+          newContent = response;
+        } else {
+          console.error('❌ CRITICAL ERROR: Could not extract content from response', response);
+          newContent = '';
+        }
         
         // Log detailed information about the extracted content
         console.log('🔍 AUTO-PILOT: Content extraction result', {
