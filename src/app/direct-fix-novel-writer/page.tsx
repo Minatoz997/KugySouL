@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import NovelWriter from '@/components/novel/NovelWriter';
-import DirectFixNovelWriter from '@/components/novel/DirectFixNovelWriter';
 import ApiKeySetup from '@/components/novel/ApiKeySetup';
 
 export default function DirectFixNovelWriterPage() {
@@ -24,10 +23,7 @@ export default function DirectFixNovelWriterPage() {
         </div>
       </div>
       
-      {/* Apply the direct fix to the autoPilotWrite function */}
-      <DirectFixNovelWriter />
-      
-      {/* Render the original NovelWriter component */}
+      {/* Render the fixed NovelWriter component */}
       <div className="relative">
         <div className="absolute top-0 right-0 bg-green-100 text-green-800 px-2 py-1 text-xs rounded-br-md z-50">
           Direct Fix Auto-Pilot

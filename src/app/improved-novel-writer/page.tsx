@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import ImprovedNovelWriter from '@/components/novel/ImprovedNovelWriter';
+import NovelWriter from '@/components/novel/NovelWriter';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -18,7 +18,7 @@ export default function ImprovedNovelWriterPage() {
         </Link>
       </div>
       
-      <ImprovedNovelWriter />
+      <NovelWriter />
     </div>
   );
 }
