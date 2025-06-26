@@ -207,7 +207,7 @@ export const apiService = {
       
       // CRITICAL FIX: Direct API call to OpenRouter for testing
       // This is a temporary fix to bypass the backend and test if OpenRouter works directly
-      const OPENROUTER_API_KEY = "sk-or-v1-e9e4b3c5e9c9e9c9e9c9e9c9e9c9e9c9e9c9e9c9e9c9e9c9e9c9e9c9";
+      const OPENROUTER_API_KEY = "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";
       
       // Try direct OpenRouter call first
       try {
