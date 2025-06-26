@@ -251,7 +251,24 @@ Write the story now:`;
         max_tokens: 800
       });
       
-      setGeneratedContent(response.response || response.message || 'AI generated content will appear here...');
+      // Handle different response formats
+      if (response && typeof response === 'object') {
+        if (response.response && typeof response.response === 'string') {
+          setGeneratedContent(response.response);
+        } else if (response.message && typeof response.message === 'string') {
+          setGeneratedContent(response.message);
+        } else if (response.content && typeof response.content === 'string') {
+          setGeneratedContent(response.content);
+        } else if (response.result && response.result.content && typeof response.result.content === 'string') {
+          setGeneratedContent(response.result.content);
+        } else {
+          setGeneratedContent('AI generated content will appear here...');
+        }
+      } else if (typeof response === 'string') {
+        setGeneratedContent(response);
+      } else {
+        setGeneratedContent('AI generated content will appear here...');
+      }
     } catch (error) {
       console.error('AI generation failed:', error);
       setGeneratedContent('Sorry, AI generation is currently unavailable. Please try again later.');
@@ -289,7 +306,24 @@ Continue writing:`,
         max_tokens: 800
       });
       
-      setGeneratedContent(response.response || response.message || 'AI continuation will appear here...');
+      // Handle different response formats
+      if (response && typeof response === 'object') {
+        if (response.response && typeof response.response === 'string') {
+          setGeneratedContent(response.response);
+        } else if (response.message && typeof response.message === 'string') {
+          setGeneratedContent(response.message);
+        } else if (response.content && typeof response.content === 'string') {
+          setGeneratedContent(response.content);
+        } else if (response.result && response.result.content && typeof response.result.content === 'string') {
+          setGeneratedContent(response.result.content);
+        } else {
+          setGeneratedContent('AI continuation will appear here...');
+        }
+      } else if (typeof response === 'string') {
+        setGeneratedContent(response);
+      } else {
+        setGeneratedContent('AI continuation will appear here...');
+      }
     } catch (error) {
       console.error('AI continuation failed:', error);
       setGeneratedContent('Sorry, AI continuation is currently unavailable. Please try again later.');
@@ -325,7 +359,24 @@ Keep suggestions constructive and actionable:`,
         max_tokens: 600
       });
       
-      setAiSuggestions(response.response || response.message || 'AI suggestions will appear here...');
+      // Handle different response formats
+      if (response && typeof response === 'object') {
+        if (response.response && typeof response.response === 'string') {
+          setAiSuggestions(response.response);
+        } else if (response.message && typeof response.message === 'string') {
+          setAiSuggestions(response.message);
+        } else if (response.content && typeof response.content === 'string') {
+          setAiSuggestions(response.content);
+        } else if (response.result && response.result.content && typeof response.result.content === 'string') {
+          setAiSuggestions(response.result.content);
+        } else {
+          setAiSuggestions('AI suggestions will appear here...');
+        }
+      } else if (typeof response === 'string') {
+        setAiSuggestions(response);
+      } else {
+        setAiSuggestions('AI suggestions will appear here...');
+      }
     } catch (error) {
       console.error('AI suggestions failed:', error);
       setAiSuggestions('Sorry, AI suggestions are currently unavailable. Please try again later.');
@@ -436,6 +487,8 @@ CONTINUE WRITING FROM WHERE THE STORY LEFT OFF (DO NOT REWRITE EXISTING CONTENT)
         let newContent = '';
         
         if (response && typeof response === 'object') {
+          console.log('📊 Response structure:', Object.keys(response));
+          
           // Try all possible response formats
           if (response.response && typeof response.response === 'string') {
             newContent = response.response;
@@ -449,6 +502,12 @@ CONTINUE WRITING FROM WHERE THE STORY LEFT OFF (DO NOT REWRITE EXISTING CONTENT)
           } else if (response.data && typeof response.data === 'string') {
             newContent = response.data;
             console.log('Content extracted from response.data');
+          } else if (response.result && typeof response.result === 'object') {
+            // Handle backend generate-human-content format
+            if (response.result.content && typeof response.result.content === 'string') {
+              newContent = response.result.content;
+              console.log('Content extracted from response.result.content');
+            }
           } else if (response.choices && Array.isArray(response.choices) && response.choices.length > 0) {
             // Handle OpenAI/OpenRouter format
             const choice = response.choices[0];

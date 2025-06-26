@@ -136,6 +136,20 @@ export const apiService = {
   // Generate human-like content
   async generateHumanContent(data: GenerateHumanContentRequest): Promise<GenerateHumanContentResponse> {
     const response = await api.post(endpoints.generateHumanContent, data)
+    // Handle different response formats from backend
+    if (response.data && response.data.result && response.data.result.content) {
+      // Backend returns { status, result: { content, ... }, message }
+      return {
+        content: response.data.result.content,
+        style_match_score: response.data.result.style_match_score || 0,
+        human_likelihood: response.data.result.human_likelihood || 0,
+        content_stats: {
+          word_count: response.data.result.word_count || 0,
+          readability_score: response.data.result.quality_indicators?.readability || 0,
+          descriptive_elements: response.data.result.generation_metadata?.uniqueness_score || 0
+        }
+      }
+    }
     return response.data
   },
 
@@ -198,6 +212,36 @@ export const apiService = {
     temperature?: number
   }): Promise<ChatResponse> {
     const response = await api.post(endpoints.chatMessage, data)
+    
+    // Handle different response formats from backend
+    if (response.data) {
+      // Log response structure for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📊 Chat response structure:', Object.keys(response.data))
+      }
+      
+      // If response has result.content format (from generate-human-content endpoint)
+      if (response.data.result && response.data.result.content) {
+        return {
+          response: response.data.result.content,
+          status: response.data.status,
+          model: data.model
+        }
+      }
+      
+      // If response has choices format (from OpenAI/OpenRouter direct API)
+      if (response.data.choices && Array.isArray(response.data.choices) && response.data.choices.length > 0) {
+        const choice = response.data.choices[0]
+        if (choice.message && choice.message.content) {
+          return {
+            response: choice.message.content,
+            status: 'success',
+            model: response.data.model || data.model
+          }
+        }
+      }
+    }
+    
     return response.data
   },
 
