@@ -1,6 +1,7 @@
 export const config = {
-  apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://minatoz997-backend66.hf.space',
-  wsUrl: process.env.NEXT_PUBLIC_WS_URL || 'wss://minatoz997-backend66.hf.space',
+  // CRITICAL FIX: Use the correct backend URL from OpenHands-Backend
+  apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://maplemoes-openhands-backend.hf.space',
+  wsUrl: process.env.NEXT_PUBLIC_WS_URL || 'wss://maplemoes-openhands-backend.hf.space',
   appName: 'OpenHands AI',
   appDescription: 'Powerful AI agent that can execute code, browse the web, and interact with various tools',
   maxMessageLength: 4000,
