@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import api, { extractContentFromResponse } from '@/services/api';
 
 export default function NovelWriter() {
@@ -156,38 +155,17 @@ export default function NovelWriter() {
               </span>
             )}
             
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={saveNovel}>
-                    <Save className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Save</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button variant="ghost" size="sm" onClick={saveNovel} title="Save">
+              <Save className="h-4 w-4" />
+            </Button>
             
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={() => setContent('')}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Clear</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button variant="ghost" size="sm" onClick={() => setContent('')} title="Clear">
+              <Trash2 className="h-4 w-4" />
+            </Button>
             
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={enableCollaborativeEditing}>
-                    <Users className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Collaborative Editing</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button variant="ghost" size="sm" onClick={enableCollaborativeEditing} title="Collaborative Editing">
+              <Users className="h-4 w-4" />
+            </Button>
           </div>
         </div>
         
