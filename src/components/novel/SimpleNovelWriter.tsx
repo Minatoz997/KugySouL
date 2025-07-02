@@ -29,13 +29,53 @@ export default function SimpleNovelWriter() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load saved content on mount (safely for SSR)
+  // Load saved content on mount and show onboarding tips (safely for SSR)
   useEffect(() => {
     // Only access localStorage in the browser environment
     if (typeof window !== 'undefined') {
       const savedContent = localStorage.getItem('novel_content');
       if (savedContent) {
         setEditorContent(savedContent);
+      }
+      
+      // Show onboarding tips for first-time users
+      const hasSeenTips = localStorage.getItem('novel_tips_seen');
+      if (!hasSeenTips) {
+        // Mark tips as seen
+        localStorage.setItem('novel_tips_seen', 'true');
+        
+        // Show welcome tip
+        setTimeout(() => {
+          toast.info(
+            <div>
+              <h3 className="font-medium mb-1">Welcome to Novel Writer!</h3>
+              <p>Start typing or use AI to generate content for your story.</p>
+            </div>,
+            { duration: 5000 }
+          );
+        }, 1000);
+        
+        // Show keyboard shortcuts tip after a delay
+        setTimeout(() => {
+          toast.info(
+            <div>
+              <h3 className="font-medium mb-1">Keyboard Shortcuts Available</h3>
+              <p>Press <kbd className="px-1 bg-gray-100 border rounded">Ctrl+G</kbd> to generate content with AI.</p>
+            </div>,
+            { duration: 5000 }
+          );
+        }, 8000);
+        
+        // Show auto-pilot tip after another delay
+        setTimeout(() => {
+          toast.info(
+            <div>
+              <h3 className="font-medium mb-1">Try Auto-Pilot Mode</h3>
+              <p>Let AI write your entire chapter automatically!</p>
+            </div>,
+            { duration: 5000 }
+          );
+        }, 15000);
       }
     }
   }, []);
@@ -275,6 +315,24 @@ BEGIN CONTINUATION NOW:`;
     toast.success('Novel deleted successfully');
     setShowDeleteDialog(false);
   };
+  
+  // Reset novel to start fresh
+  const resetNovel = () => {
+    if (editorContent.trim() === '') {
+      toast.info('Novel is already empty');
+      return;
+    }
+    
+    // Save current content as backup
+    if (typeof window !== 'undefined') {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      localStorage.setItem(`novel_backup_${timestamp}`, editorContent);
+    }
+    
+    // Clear the editor but keep the novel in localStorage
+    setEditorContent('');
+    toast.success('Novel reset successfully. Previous content saved as backup.');
+  };
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
@@ -355,6 +413,22 @@ BEGIN CONTINUATION NOW:`;
               <span className="text-sm mr-2">{chapterWordCount}/2000 words</span>
               <Progress value={progressPercentage} className="w-32 h-2" />
             </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetNovel}
+              className="flex items-center gap-1 text-gray-500 hover:text-blue-600"
+              title="Reset novel content (saves backup)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                <path d="M16 21h5v-5" />
+              </svg>
+              <span>Reset</span>
+            </Button>
             
             <Button 
               variant={autoPilotMode ? "destructive" : "default"} 
