@@ -240,8 +240,19 @@ BEGIN CONTINUATION NOW:`;
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Simple Novel Writer (2000 Words per Chapter)</h1>
+      <div className="flex items-center mb-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleBack}
+          className="flex items-center gap-1 mr-2"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-medium">Back</span>
+        </Button>
+        
+        <h1 className="text-2xl font-bold flex-grow">Simple Novel Writer (2000 Words per Chapter)</h1>
+        
         <Button 
           variant={showDeleteConfirm ? "destructive" : "outline"} 
           size="sm" 
@@ -250,18 +261,6 @@ BEGIN CONTINUATION NOW:`;
         >
           <Trash2 className="h-4 w-4" />
           {showDeleteConfirm ? "Confirm Delete" : "Delete Novel"}
-        </Button>
-      </div>
-      
-      <div className="flex items-center mb-4">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={handleBack}
-          className="flex items-center gap-1 text-gray-600 hover:text-gray-900 px-1"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="font-medium">Back</span>
         </Button>
       </div>
 
