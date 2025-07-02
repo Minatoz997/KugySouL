@@ -150,9 +150,17 @@ Resolusi memberikan penutup yang memuaskan sambil membuka kemungkinan untuk petu
             Pilih salah satu ide cerita yang menarik untuk dikembangkan
           </p>
         </div>
-        <Button variant="outline" onClick={() => setCurrentStep('genre')}>
-          Ganti Genre
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setCurrentStep('genre')}>
+            Kembali
+          </Button>
+          {selectedIdea && (
+            <Button onClick={() => setCurrentStep('synopsis')}>
+              Lanjut
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -208,9 +216,17 @@ Resolusi memberikan penutup yang memuaskan sambil membuka kemungkinan untuk petu
             AI akan mengembangkan sinopsis berdasarkan ide yang Anda pilih
           </p>
         </div>
-        <Button variant="outline" onClick={() => setCurrentStep('idea')}>
-          Ganti Ide
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setCurrentStep('idea')}>
+            Kembali
+          </Button>
+          {generatedSynopsis && (
+            <Button onClick={() => setCurrentStep('complete')}>
+              Lanjut
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -239,6 +255,15 @@ Resolusi memberikan penutup yang memuaskan sambil membuka kemungkinan untuk petu
               <p className="text-sm text-gray-500">
                 Anda dapat mengedit sinopsis di atas sebelum melanjutkan
               </p>
+              <div className="flex justify-end mt-4">
+                <Button 
+                  onClick={() => setCurrentStep('complete')}
+                  className="flex items-center gap-2"
+                >
+                  Lanjut ke Langkah Berikutnya
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ) : (
             <Button 
@@ -344,6 +369,49 @@ Resolusi memberikan penutup yang memuaskan sambil membuka kemungkinan untuk petu
       {currentStep === 'idea' && renderIdeaSelection()}
       {currentStep === 'synopsis' && renderSynopsisGeneration()}
       {currentStep === 'complete' && renderComplete()}
+      
+      {/* Fixed Navigation Footer */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 flex justify-between">
+        <Button 
+          variant="outline" 
+          onClick={() => {
+            if (currentStep === 'idea') setCurrentStep('genre');
+            if (currentStep === 'synopsis') setCurrentStep('idea');
+            if (currentStep === 'complete') setCurrentStep('synopsis');
+          }}
+          disabled={currentStep === 'genre'}
+        >
+          Kembali
+        </Button>
+        
+        <div className="flex-1 flex justify-center">
+          <p className="text-sm text-gray-500">
+            Langkah {
+              currentStep === 'genre' ? '1/4' : 
+              currentStep === 'idea' ? '2/4' : 
+              currentStep === 'synopsis' ? '3/4' : '4/4'
+            }
+          </p>
+        </div>
+        
+        <Button 
+          onClick={() => {
+            if (currentStep === 'genre' && selectedGenre) setCurrentStep('idea');
+            if (currentStep === 'idea' && selectedIdea) setCurrentStep('synopsis');
+            if (currentStep === 'synopsis' && generatedSynopsis) setCurrentStep('complete');
+            if (currentStep === 'complete') completeBrainstorming();
+          }}
+          disabled={(currentStep === 'genre' && !selectedGenre) || 
+                   (currentStep === 'idea' && !selectedIdea) || 
+                   (currentStep === 'synopsis' && !generatedSynopsis)}
+        >
+          {currentStep === 'complete' ? 'Selesai' : 'Lanjut'}
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
+      
+      {/* Add padding at the bottom to prevent content from being hidden behind the fixed footer */}
+      <div className="h-16"></div>
     </div>
   );
 }
