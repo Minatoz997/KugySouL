@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Sparkles, Play, Pause, ArrowLeft, Trash2 } from 'lucide-react';
+import { Loader2, Sparkles, Play, Pause, ArrowLeft, Trash2, AlertTriangle } from 'lucide-react';
 import { sendChatMessage } from '@/services/api';
 import { countWords } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 import { useRouter } from 'next/navigation';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
 
 export default function SimpleNovelWriter() {
   const router = useRouter();
@@ -18,6 +26,7 @@ export default function SimpleNovelWriter() {
   const [selectedModel] = useState('gpt-3.5-turbo');
   const [selectedLanguage] = useState('indonesian');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
   // Load saved content on mount (safely for SSR)
@@ -30,6 +39,35 @@ export default function SimpleNovelWriter() {
       }
     }
   }, []);
+  
+  // Add keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S or Cmd+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        // Content is already auto-saved, but we can show a toast to confirm
+        toast.success('Novel saved successfully');
+      }
+      
+      // Escape key to go back
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        router.back();
+      }
+      
+      // Ctrl+G or Cmd+G to generate content
+      if ((e.ctrlKey || e.metaKey) && e.key === 'g' && !isGenerating && !autoPilotMode) {
+        e.preventDefault();
+        generateContent();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isGenerating, autoPilotMode, router]);
 
   // Update word count when editor content changes and save content
   useEffect(() => {
@@ -223,19 +261,19 @@ BEGIN CONTINUATION NOW:`;
 
   // Handle novel deletion
   const handleDelete = () => {
-    if (showDeleteConfirm) {
-      // Clear the content and localStorage
-      setEditorContent('');
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('novel_content');
-      }
-      toast.success('Novel deleted successfully');
-      setShowDeleteConfirm(false);
-    } else {
-      setShowDeleteConfirm(true);
-      // Auto-hide the confirmation after 3 seconds
-      setTimeout(() => setShowDeleteConfirm(false), 3000);
+    // Show the delete dialog instead of using the button state
+    setShowDeleteDialog(true);
+  };
+  
+  // Confirm deletion in the dialog
+  const confirmDelete = () => {
+    // Clear the content and localStorage
+    setEditorContent('');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('novel_content');
     }
+    toast.success('Novel deleted successfully');
+    setShowDeleteDialog(false);
   };
 
   return (
@@ -254,14 +292,56 @@ BEGIN CONTINUATION NOW:`;
         <h1 className="text-2xl font-bold flex-grow">Simple Novel Writer (2000 Words per Chapter)</h1>
         
         <Button 
-          variant={showDeleteConfirm ? "destructive" : "outline"} 
+          variant="outline" 
           size="sm" 
           onClick={handleDelete}
           className="flex items-center gap-1"
         >
           <Trash2 className="h-4 w-4" />
-          {showDeleteConfirm ? "Confirm Delete" : "Delete Novel"}
+          Delete Novel
         </Button>
+        
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Confirm Deletion
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this novel? This action cannot be undone and all content will be permanently lost.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Yes, Delete Novel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Keyboard Shortcuts Info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-700">
+        <h3 className="font-medium mb-1">Keyboard Shortcuts:</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          <div className="flex items-center gap-1">
+            <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Ctrl+S</kbd>
+            <span>Save novel</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Esc</kbd>
+            <span>Go back</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Ctrl+G</kbd>
+            <span>Generate content</span>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -324,10 +404,15 @@ BEGIN CONTINUATION NOW:`;
             placeholder="Start writing or generate content..."
             className="min-h-[60vh] p-4 font-serif text-lg leading-relaxed resize-none"
           />
+          
+          {/* Loading overlay when generating content */}
           {isGenerating && (
-            <div className="absolute bottom-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-md flex items-center">
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Generating...
+            <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center">
+              <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
+                <Loader2 className="h-10 w-10 text-blue-500 animate-spin mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-1">Generating Content...</h3>
+                <p className="text-gray-600 text-sm">AI is crafting the next part of your story</p>
+              </div>
             </div>
           )}
         </div>
