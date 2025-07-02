@@ -508,20 +508,61 @@ BEGIN CONTINUATION NOW:`;
     toast.success('Novel reset successfully. Previous content saved as backup.');
   };
 
+  // Detect if user is on mobile
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Check if user is on mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Check on mount
+    if (typeof window !== 'undefined') {
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+    }
+    
+    // Cleanup
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', checkMobile);
+      }
+    };
+  }, []);
+
   return (
     <div className={`${focusMode ? 'fixed inset-0 bg-black z-50' : 'container mx-auto p-4 max-w-6xl'}`}>
-      {/* Focus Mode Exit Button */}
+      {/* Focus Mode Controls */}
       {focusMode && (
-        <button 
-          onClick={() => setFocusMode(false)}
-          className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors z-10"
-          title="Exit Focus Mode (Esc)"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 6 6 18"></path>
-            <path d="m6 6 12 12"></path>
-          </svg>
-        </button>
+        <div className="flex items-center justify-between absolute top-0 left-0 right-0 p-2 bg-gradient-to-b from-black/80 to-transparent z-10">
+          {/* Mobile-friendly exit button */}
+          <button 
+            onClick={() => setFocusMode(false)}
+            className="text-white/70 hover:text-white transition-colors p-2"
+            title="Exit Focus Mode (Esc)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+          
+          {/* Word count in focus mode */}
+          <div className="text-white/70 text-sm">
+            {chapterWordCount}/2000 words
+          </div>
+          
+          {/* Generate button in focus mode */}
+          <button
+            onClick={generateContent}
+            disabled={isGenerating}
+            className="text-white/70 hover:text-white transition-colors p-2"
+            title="Generate Content"
+          >
+            <Sparkles className="h-5 w-5" />
+          </button>
+        </div>
       )}
       
       <div className={`flex items-center mb-4 ${focusMode ? 'hidden' : ''}`}>
@@ -599,28 +640,42 @@ BEGIN CONTINUATION NOW:`;
         </Dialog>
       </div>
 
-      {/* Keyboard Shortcuts Info */}
-      <div className={`bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-700 ${focusMode ? 'hidden' : ''}`}>
-        <h3 className="font-medium mb-1">Keyboard Shortcuts:</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <div className="flex items-center gap-1">
-            <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Ctrl+S</kbd>
-            <span>Save novel</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Esc</kbd>
-            <span>Go back</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Ctrl+G</kbd>
-            <span>Generate content</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Ctrl+Shift+F</kbd>
-            <span>Focus mode</span>
+      {/* Keyboard Shortcuts Info - Hide on mobile */}
+      {!isMobile && (
+        <div className={`bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-700 ${focusMode ? 'hidden' : ''}`}>
+          <h3 className="font-medium mb-1">Keyboard Shortcuts:</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="flex items-center gap-1">
+              <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Ctrl+S</kbd>
+              <span>Save novel</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Esc</kbd>
+              <span>Go back</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Ctrl+G</kbd>
+              <span>Generate content</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <kbd className="px-2 py-1 bg-white border border-gray-300 rounded-md text-xs">Ctrl+Shift+F</kbd>
+              <span>Focus mode</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+      
+      {/* Mobile Tips - Only show on mobile */}
+      {isMobile && !focusMode && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-700">
+          <h3 className="font-medium mb-1">Tips:</h3>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Tap the blue button in the corner to enter focus mode</li>
+            <li>Use the Generate button to continue your story with AI</li>
+            <li>Swipe between chapters to navigate your novel</li>
+          </ul>
+        </div>
+      )}
 
       {/* Chapter Selection */}
       <div className={`mb-4 ${focusMode ? 'hidden' : ''}`}>
@@ -639,12 +694,12 @@ BEGIN CONTINUATION NOW:`;
           </Button>
         </div>
         
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className={`${isMobile ? 'flex snap-x snap-mandatory overflow-x-auto pb-2 -mx-4 px-4' : 'flex gap-2 overflow-x-auto pb-2'}`}>
           {chapters.map(chapter => (
             <button
               key={chapter.id}
               onClick={() => switchChapter(chapter.id)}
-              className={`px-3 py-2 rounded-md text-sm whitespace-nowrap flex items-center gap-1 ${
+              className={`${isMobile ? 'snap-start mr-2 flex-shrink-0' : ''} px-3 py-2 rounded-md text-sm whitespace-nowrap flex items-center gap-1 ${
                 chapter.id === currentChapterId 
                   ? 'bg-blue-100 text-blue-700 border border-blue-300' 
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -657,10 +712,10 @@ BEGIN CONTINUATION NOW:`;
                     e.stopPropagation();
                     deleteChapter(chapter.id);
                   }}
-                  className="ml-1 text-gray-500 hover:text-red-500"
+                  className={`ml-1 text-gray-500 hover:text-red-500 ${isMobile ? 'p-1' : ''}`}
                   title="Delete chapter"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "16" : "14"} height={isMobile ? "16" : "14"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 6 6 18M6 6l12 12"></path>
                   </svg>
                 </button>
@@ -668,6 +723,24 @@ BEGIN CONTINUATION NOW:`;
             </button>
           ))}
         </div>
+        
+        {/* Mobile chapter navigation indicator */}
+        {isMobile && chapters.length > 1 && (
+          <div className="flex justify-center mt-1 mb-2">
+            <div className="flex gap-1">
+              {chapters.map((chapter, index) => (
+                <div 
+                  key={chapter.id} 
+                  className={`h-1 rounded-full ${
+                    chapter.id === currentChapterId 
+                      ? 'w-4 bg-blue-500' 
+                      : 'w-2 bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
         
         {/* New Chapter Dialog */}
         <Dialog open={showChapterDialog} onOpenChange={setShowChapterDialog}>
@@ -711,40 +784,43 @@ BEGIN CONTINUATION NOW:`;
           <div className="flex items-center space-x-2">
             <div className="flex items-center">
               <span className="text-sm mr-2">{chapterWordCount}/2000 words</span>
-              <Progress value={progressPercentage} className="w-32 h-2" />
+              <Progress value={progressPercentage} className={`${isMobile ? 'w-20' : 'w-32'} h-2`} />
             </div>
             
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={resetNovel}
-              className="flex items-center gap-1 text-gray-500 hover:text-blue-600"
-              title="Reset novel content (saves backup)"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                <path d="M3 3v5h5" />
-                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-                <path d="M16 21h5v-5" />
-              </svg>
-              <span>Reset</span>
-            </Button>
+            {!isMobile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetNovel}
+                className="flex items-center gap-1 text-gray-500 hover:text-blue-600"
+                title="Reset novel content (saves backup)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
+                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                  <path d="M16 21h5v-5" />
+                </svg>
+                <span>Reset</span>
+              </Button>
+            )}
             
             <Button 
               variant={autoPilotMode ? "destructive" : "default"} 
               size="sm" 
               onClick={autoPilotMode ? stopAutoPilot : startAutoPilot}
               disabled={isGenerating}
+              className={isMobile ? "px-2" : ""}
             >
               {autoPilotMode ? (
                 <>
                   <Pause className="h-4 w-4 mr-1" />
-                  Stop Auto-Pilot
+                  {isMobile ? "Stop" : "Stop Auto-Pilot"}
                 </>
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-1" />
-                  Start Auto-Pilot
+                  {isMobile ? "Auto" : "Start Auto-Pilot"}
                 </>
               )}
             </Button>
@@ -754,16 +830,17 @@ BEGIN CONTINUATION NOW:`;
               size="sm" 
               onClick={generateContent}
               disabled={isGenerating || autoPilotMode}
+              className={isMobile ? "px-2" : ""}
             >
               {isGenerating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  Generating...
+                  {isMobile ? "" : "Generating..."}
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 mr-1" />
-                  Generate
+                  {isMobile ? "" : "Generate"}
                 </>
               )}
             </Button>
@@ -776,11 +853,11 @@ BEGIN CONTINUATION NOW:`;
             value={editorContent}
             onChange={(e) => setEditorContent(e.target.value)}
             placeholder="Start writing or generate content..."
-            className={`${
+            className={
               focusMode 
-                ? 'min-h-screen p-8 font-serif text-xl leading-relaxed resize-none bg-black text-white border-none focus:ring-0 focus:outline-none' 
+                ? `min-h-${isMobile ? '[70vh]' : 'screen'} ${isMobile ? 'p-4 pt-16' : 'p-8'} font-serif ${isMobile ? 'text-lg' : 'text-xl'} leading-relaxed resize-none bg-black text-white border-none focus:ring-0 focus:outline-none` 
                 : 'min-h-[60vh] p-4 font-serif text-lg leading-relaxed resize-none'
-            }`}
+            }
           />
           
           {/* Focus Mode Toggle Button */}
@@ -789,25 +866,34 @@ BEGIN CONTINUATION NOW:`;
               variant="ghost"
               size="sm"
               onClick={() => setFocusMode(true)}
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
-              title="Enter Focus Mode (Ctrl+Shift+F)"
+              className={`absolute ${isMobile ? 'bottom-4 right-4 bg-blue-500 text-white hover:bg-blue-600 shadow-lg rounded-full p-3' : 'top-2 right-2 text-gray-400 hover:text-gray-700'}`}
+              title={`Enter Focus Mode ${isMobile ? '' : '(Ctrl+Shift+F)'}`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
-                <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
-                <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
-                <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
-              </svg>
+              {isMobile ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                  <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                  <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                  <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                  <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                  <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                  <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                </svg>
+              )}
             </Button>
           )}
           
           {/* Loading overlay when generating content */}
           {isGenerating && (
             <div className={`absolute inset-0 ${focusMode ? 'bg-black/80' : 'bg-white/80'} flex flex-col items-center justify-center`}>
-              <div className={`${focusMode ? 'bg-gray-900 text-white' : 'bg-white'} p-6 rounded-lg shadow-lg flex flex-col items-center`}>
-                <Loader2 className={`h-10 w-10 ${focusMode ? 'text-blue-400' : 'text-blue-500'} animate-spin mb-4`} />
-                <h3 className={`text-lg font-medium ${focusMode ? 'text-gray-100' : 'text-gray-900'} mb-1`}>Generating Content...</h3>
-                <p className={`${focusMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>AI is crafting the next part of your story</p>
+              <div className={`${focusMode ? 'bg-gray-900 text-white' : 'bg-white'} ${isMobile ? 'p-4' : 'p-6'} rounded-lg shadow-lg flex flex-col items-center max-w-[90%]`}>
+                <Loader2 className={`${isMobile ? 'h-8 w-8' : 'h-10 w-10'} ${focusMode ? 'text-blue-400' : 'text-blue-500'} animate-spin mb-3`} />
+                <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-medium ${focusMode ? 'text-gray-100' : 'text-gray-900'} mb-1`}>Generating Content...</h3>
+                <p className={`${focusMode ? 'text-gray-400' : 'text-gray-600'} text-sm text-center`}>AI is crafting the next part of your story</p>
               </div>
             </div>
           )}
