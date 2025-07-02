@@ -45,7 +45,7 @@ export function ProjectSelector({ projects, onSelectProject, onBack }: ProjectSe
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4 mb-4">
           <Button variant="ghost" onClick={onBack}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Kembali
@@ -56,6 +56,20 @@ export function ProjectSelector({ projects, onSelectProject, onBack }: ProjectSe
             </h1>
             <p className="text-gray-600 mt-2">
               Lanjutkan mengerjakan salah satu proyek novel Anda
+            </p>
+          </div>
+        </div>
+        
+        {/* Instruksi yang jelas */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8 flex items-center">
+          <div className="bg-blue-100 rounded-full p-2 mr-4">
+            <BookOpen className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="font-medium text-blue-800 mb-1">Cara Memilih Proyek</h3>
+            <p className="text-blue-700 text-sm">
+              Klik kartu proyek atau tombol "Pilih Proyek" untuk melanjutkan pengerjaan novel Anda.
+              Setiap proyek menampilkan informasi progres dan statistik penting.
             </p>
           </div>
         </div>
@@ -84,9 +98,13 @@ export function ProjectSelector({ projects, onSelectProject, onBack }: ProjectSe
               return (
                 <Card 
                   key={project.id} 
-                  className="hover:shadow-xl transition-all duration-300 cursor-pointer"
+                  className="hover:shadow-xl hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-300 cursor-pointer relative overflow-hidden group"
                   onClick={() => onSelectProject(project)}
                 >
+                  {/* Indikator visual bahwa kartu bisa diklik */}
+                  <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs py-1 px-2 rounded-bl-md opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Klik untuk membuka
+                  </div>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -170,6 +188,20 @@ export function ProjectSelector({ projects, onSelectProject, onBack }: ProjectSe
                           }}
                         />
                       </div>
+                    </div>
+                    
+                    {/* Tombol Pilih yang jelas */}
+                    <div className="mt-4 flex justify-end">
+                      <Button 
+                        size="sm" 
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Mencegah event bubbling
+                          onSelectProject(project);
+                        }}
+                      >
+                        Pilih Proyek
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
