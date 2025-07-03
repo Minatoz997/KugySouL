@@ -907,17 +907,27 @@ BEGIN CONTINUATION NOW:`;
     if (currentProject && currentChapter) {
       saveCurrentChapter();
     }
+    
+    // Use both router.push and direct window location for more reliable navigation
     router.push('/novel');
+    
+    // Add a small delay and then use direct navigation as a fallback
+    setTimeout(() => {
+      window.location.href = '/novel';
+    }, 100);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Back Button - Fixed at the top left for mobile with improved visibility and clickability */}
-      <div className="fixed top-4 left-4 z-[200] bg-white rounded-lg shadow-md pointer-events-auto border border-gray-200 hover:shadow-lg transition-all duration-200">
+      <div 
+        className="fixed top-2 left-2 z-[9999] bg-white rounded-lg shadow-lg pointer-events-auto border-2 border-blue-300 hover:shadow-xl transition-all duration-200"
+        onClick={handleBack} // Add click handler to the container as well for larger click area
+      >
         <BackButton 
           onClick={handleBack} 
           label="Back to Novel" 
-          className="font-medium text-blue-600 hover:text-blue-800"
+          className="font-semibold text-blue-600 hover:text-blue-800"
         />
       </div>
       

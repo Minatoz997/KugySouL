@@ -14,11 +14,11 @@ export function BackButton({ onClick, label = 'Back', className = '' }: BackButt
   return (
     <Button 
       variant="ghost" 
-      size="sm" 
+      size="default" 
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-3 h-auto transition-all duration-200 ease-in-out hover:scale-105 hover:bg-blue-50 active:scale-95 ${className}`}
+      className={`flex items-center gap-2 px-5 py-3.5 h-auto transition-all duration-200 ease-in-out hover:scale-105 hover:bg-blue-50 active:scale-95 focus:ring-2 focus:ring-blue-300 ${className}`}
     >
-      <ArrowLeft className="h-5 w-5" />
+      <ArrowLeft className="h-6 w-6" />
       <span className="font-medium">{label}</span>
     </Button>
   );
