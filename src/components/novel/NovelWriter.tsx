@@ -912,9 +912,13 @@ BEGIN CONTINUATION NOW:`;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Back Button - Fixed at the top left for mobile */}
-      <div className="fixed top-2 left-2 z-50 bg-white/80 backdrop-blur-sm rounded-full shadow-md">
-        <BackButton onClick={handleBack} label="Back to Novel" />
+      {/* Mobile Back Button - Fixed at the top left for mobile with improved visibility and clickability */}
+      <div className="fixed top-4 left-4 z-[200] bg-white rounded-lg shadow-md pointer-events-auto border border-gray-200 hover:shadow-lg transition-all duration-200">
+        <BackButton 
+          onClick={handleBack} 
+          label="Back to Novel" 
+          className="font-medium text-blue-600 hover:text-blue-800"
+        />
       </div>
       
       {/* Header */}
