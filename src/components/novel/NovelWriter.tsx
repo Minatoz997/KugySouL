@@ -902,34 +902,48 @@ BEGIN CONTINUATION NOW:`;
     return <StoryEngineIntegration onClose={() => setShowStoryEngine(false)} />;
   }
 
-  const handleBack = () => {
+  const handleBack = (e: React.MouseEvent) => {
+    // Prevent default behavior to ensure our navigation takes precedence
+    e.preventDefault();
+    e.stopPropagation();
+    
     // Save current content before navigating away
     if (currentProject && currentChapter) {
       saveCurrentChapter();
     }
     
-    // Use both router.push and direct window location for more reliable navigation
-    router.push('/novel');
+    // Force direct navigation instead of relying on Next.js router
+    // This ensures the navigation happens regardless of any router issues
+    window.location.href = '/novel';
     
-    // Add a small delay and then use direct navigation as a fallback
+    // Log for debugging
+    console.log('Back button clicked, navigating to /novel');
+    
+    // As a fallback, also try the Next.js router after a short delay
     setTimeout(() => {
-      window.location.href = '/novel';
-    }, 100);
+      if (window.location.pathname !== '/novel') {
+        console.log('Fallback navigation with router.push');
+        router.push('/novel');
+      }
+    }, 50);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Back Button - Fixed at the top left for mobile with improved visibility and clickability */}
-      <div 
-        className="fixed top-2 left-2 z-[9999] bg-white rounded-lg shadow-lg pointer-events-auto border-2 border-blue-300 hover:shadow-xl transition-all duration-200"
-        onClick={handleBack} // Add click handler to the container as well for larger click area
+      {/* Wrapper with direct link as fallback */}
+      <a 
+        href="/novel" 
+        className="fixed top-2 left-2 z-[9999] bg-white rounded-lg shadow-lg pointer-events-auto border-2 border-blue-300 hover:shadow-xl transition-all duration-200 cursor-pointer no-underline"
+        onClick={(e) => handleBack(e)} // Pass the event to the handler
+        style={{ touchAction: 'manipulation' }} // Improve touch handling on mobile
       >
         <BackButton 
-          onClick={handleBack} 
+          onClick={(e) => handleBack(e)} 
           label="Back to Novel" 
           className="font-semibold text-blue-600 hover:text-blue-800"
         />
-      </div>
+      </a>
       
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
