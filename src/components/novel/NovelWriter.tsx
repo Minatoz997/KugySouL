@@ -908,13 +908,8 @@ BEGIN CONTINUATION NOW:`;
       saveCurrentChapter();
     }
     
-    // Use both router.push and direct window location for more reliable navigation
+    // Use router.push for client-side navigation
     router.push('/novel');
-    
-    // Add a small delay and then use direct navigation as a fallback
-    setTimeout(() => {
-      window.location.href = '/novel';
-    }, 100);
   };
 
   return (
