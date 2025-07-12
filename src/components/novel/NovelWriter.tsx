@@ -908,8 +908,8 @@ BEGIN CONTINUATION NOW:`;
       saveCurrentChapter();
     }
     
-    // Use router.push for client-side navigation
-    router.push('/novel');
+    // Use router.back() to go to the previous page in history
+    router.back();
   };
 
   return (
