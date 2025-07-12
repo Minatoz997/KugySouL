@@ -903,13 +903,13 @@ BEGIN CONTINUATION NOW:`;
   }
 
   const handleBack = () => {
-    // Save current content before navigating away
+    // Save current content before going back
     if (currentProject && currentChapter) {
       saveCurrentChapter();
     }
     
-    // Use router.back() to go to the previous page in history
-    router.back();
+    // Set isWriting to false to return to the novel creation menu
+    setIsWriting(false);
   };
 
   return (
