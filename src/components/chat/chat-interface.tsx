@@ -24,7 +24,6 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [conversation, setConversation] = useState<Conversation | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -64,66 +63,31 @@ export function ChatInterface() {
     setIsLoading(true)
 
     try {
-      // If this is the first message, create a new conversation
-      if (!conversation) {
-        const response = await apiService.createConversation({
-          initial_user_msg: userMessage.content
-        })
-        
-        const newConversation: Conversation = {
-          id: response.conversation_id,
-          title: userMessage.content.slice(0, 50) + '...',
-          messages: [userMessage],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          status: 'active'
-        }
-        setConversation(newConversation)
-      }
+      const chatResponse = await apiService.sendChatMessage({
+        message: userMessage.content,
+        model: 'anthropic/claude-3.5-sonnet',
+      })
 
-      // Send message to backend API
-      try {
-        const chatResponse = await apiService.sendChatMessage({
-          message: userMessage.content,
-          conversation_id: conversation?.id,
-          model: 'anthropic/claude-3.5-sonnet',
-          max_tokens: 2000,
-          temperature: 0.7
-        })
-
-        const aiMessage: Message = {
-          id: generateId(),
-          role: 'assistant',
-          content: chatResponse.response || 'Sorry, I received an empty response.',
-          timestamp: new Date(),
-          type: 'text'
-        }
-        setMessages(prev => [...prev, aiMessage])
-        setIsLoading(false)
-      } catch (apiError) {
-        console.error('API Error:', apiError)
-        // Fallback to a more helpful error message
-        const errorMessage: Message = {
-          id: generateId(),
-          role: 'assistant',
-          content: 'I apologize, but I\'m having trouble connecting to my backend services right now. Please check if the backend is running and try again.',
-          timestamp: new Date(),
-          type: 'error'
-        }
-        setMessages(prev => [...prev, errorMessage])
-        setIsLoading(false)
+      const aiMessage: Message = {
+        id: generateId(),
+        role: 'assistant',
+        content: chatResponse.response || 'Sorry, I received an empty response.',
+        timestamp: new Date(),
+        type: 'text'
       }
+      setMessages(prev => [...prev, aiMessage])
 
     } catch (error) {
-      console.error('Error in conversation flow:', error)
+      console.error('Error sending message:', error)
       const errorMessage: Message = {
         id: generateId(),
         role: 'assistant',
-        content: 'Sorry, I encountered an error while processing your request. Please try again.',
+        content: 'I apologize, but I\'m having trouble connecting to the backend. Please ensure the backend server is running and accessible.',
         timestamp: new Date(),
         type: 'error'
       }
       setMessages(prev => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
     }
   }

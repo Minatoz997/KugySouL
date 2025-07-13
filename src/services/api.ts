@@ -69,52 +69,22 @@ const extractContent = (response: unknown): string => {
 
 // Function to send a chat message to the API
 export const sendChatMessage = async (request: ChatRequest): Promise<ChatResponse> => {
-  const { message, model = 'gpt-3.5-turbo', max_tokens = 1500, temperature = 0.7, system_message } = request;
-  
-  // Add system message to request for better word count control
-  const systemMsg = system_message || "You are a creative writing assistant. Generate detailed, descriptive content with at least 500-800 words per response. Be thorough and elaborate in your writing.";
-  
+  const { message, model = 'anthropic/claude-3.5-sonnet', max_tokens = 2000, temperature = 0.7 } = request;
+
   try {
-    // First attempt
     const response = await axios.post<ChatResponse>('https://minatoz997-backend66.hf.space/chat/message', {
       message,
       model,
       max_tokens,
       temperature,
-      system_message: systemMsg
     });
-    
-    let content = extractContent(response.data);
-    let wordCount = countWords(content);
-    
-    // If response is too short (less than 400 words), try again with stronger instructions
-    if (wordCount < 400) {
-      console.log(`First response too short (${wordCount} words). Retrying with stronger instructions...`);
-      
-      const retryResponse = await axios.post<ChatResponse>('https://minatoz997-backend66.hf.space/chat/message', {
-        message: message + "\n\nIMPORTANT: Your previous response was too short. Please provide AT LEAST 500-800 words in your response. Be much more detailed and descriptive.",
-        model,
-        max_tokens: Math.max(max_tokens, 1500), // Ensure we have enough tokens
-        temperature,
-        system_message: "You MUST write at least 500-800 words in your response. Be extremely detailed and descriptive. Elaborate on all points extensively."
-      });
-      
-      content = extractContent(retryResponse.data);
-      wordCount = countWords(content);
-      
-      // If still too short, log warning but return what we have
-      if (wordCount < 400) {
-        console.warn(`Retry still produced short response (${wordCount} words).`);
-      } else {
-        console.log(`Retry successful! Generated ${wordCount} words.`);
-      }
-    } else {
-      console.log(`Generated ${wordCount} words successfully.`);
-    }
-    
+
+    const content = extractContent(response.data);
     return { response: content, model };
+
   } catch (error) {
     console.error('Error sending chat message:', error);
+    // Tambahkan re-throw agar error bisa ditangkap oleh pemanggil
     throw error;
   }
 };
