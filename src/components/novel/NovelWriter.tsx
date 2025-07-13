@@ -930,8 +930,6 @@ BEGIN CONTINUATION NOW:`;
             </div>
           </motion.div>
         </div>
-        </div>
-
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
