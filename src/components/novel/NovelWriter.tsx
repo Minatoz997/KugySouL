@@ -26,7 +26,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { sendChatMessage } from '@/services/api';
 import { StoryEngineIntegration } from '@/components/story-engine/StoryEngineIntegration';
