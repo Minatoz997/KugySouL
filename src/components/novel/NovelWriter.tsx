@@ -20,7 +20,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { sendChatMessage } from '@/services/api';
 import { StoryEngineIntegration } from '@/components/story-engine/StoryEngineIntegration';
-import { useRouter } from 'next/navigation';
 import { BackButton } from '@/components/ui/back-button';
 
 interface NovelChapter {
@@ -46,8 +45,6 @@ interface NovelProject {
 }
 
 export default function NovelWriter() {
-  const router = useRouter();
-  
   // Core state
   const [projects, setProjects] = useState<NovelProject[]>([]);
   const [currentProject, setCurrentProject] = useState<NovelProject | null>(null);
@@ -903,13 +900,13 @@ BEGIN CONTINUATION NOW:`;
   }
 
   const handleBack = () => {
-    // Save current content before navigating away
+    // Save current content before going back
     if (currentProject && currentChapter) {
       saveCurrentChapter();
     }
     
-    // Use router.push for client-side navigation
-    router.push('/novel');
+    // Set isWriting to false to return to the novel creation menu
+    setIsWriting(false);
   };
 
   return (
