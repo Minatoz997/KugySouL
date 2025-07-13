@@ -930,39 +930,39 @@ BEGIN CONTINUATION NOW:`;
             </div>
           </motion.div>
         </div>
-      </div>
+        </div>
 
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Are you sure you want to delete this project?</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone. This will permanently delete the project
-              and all its chapters.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (projectToDelete) {
-                  deleteProject(projectToDelete);
-                }
-                setIsDeleteDialogOpen(false);
-                setProjectToDelete(null);
-              }}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Are you sure you want to delete this project?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. This will permanently delete the project
+                and all its chapters.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (projectToDelete) {
+                    deleteProject(projectToDelete);
+                  }
+                  setIsDeleteDialogOpen(false);
+                  setProjectToDelete(null);
+                }}
+              >
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
 
   // Show Story Engine if requested
   if (showStoryEngine) {
