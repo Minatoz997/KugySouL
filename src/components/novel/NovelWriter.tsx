@@ -15,9 +15,18 @@ import {
   Play,
   Pause,
   Plus,
-  Layers
+  Layers,
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { sendChatMessage } from '@/services/api';
 import { StoryEngineIntegration } from '@/components/story-engine/StoryEngineIntegration';
 import { BackButton } from '@/components/ui/back-button';
@@ -77,6 +86,10 @@ export default function NovelWriter() {
   
   // Story Engine Integration
   const [showStoryEngine, setShowStoryEngine] = useState(false);
+
+  // Dialog state for delete confirmation
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
   // Load projects from localStorage on mount
   useEffect(() => {
@@ -197,6 +210,20 @@ export default function NovelWriter() {
     setEditorContent('');
     setChapterWordCount(0);
     setIsWriting(true);
+  };
+
+  const deleteProject = (projectId: string) => {
+    const updatedProjects = projects.filter(p => p.id !== projectId);
+    setProjects(updatedProjects);
+    localStorage.setItem('novel_projects', JSON.stringify(updatedProjects));
+
+    // If the deleted project was the current one, reset the view
+    if (currentProject?.id === projectId) {
+      setCurrentProject(null);
+      setCurrentChapter(null);
+      setEditorContent('');
+      setIsWriting(false); // Go back to the menu
+    }
   };
 
   const addNewChapter = (autoCreated = false) => {
@@ -866,22 +893,34 @@ BEGIN CONTINUATION NOW:`;
                   <h3 className="text-lg font-semibold mb-4">Recent Projects</h3>
                   <div className="space-y-2">
                     {projects.slice(-3).map((project) => (
-                      <div
-                        key={project.id}
-                        onClick={() => {
-                          setCurrentProject(project);
-                          const currentChap = project.chapters[project.currentChapterIndex] || project.chapters[0];
-                          setCurrentChapter(currentChap);
-                          setEditorContent(currentChap.content);
-                          setChapterWordCount(currentChap.wordCount);
-                          setIsWriting(true);
-                        }}
-                        className="p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="font-medium">{project.title}</div>
-                        <div className="text-sm text-gray-500">
-                          {project.genre} • {project.totalWords} words • {project.chapters.length} chapters
+                      <div key={project.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div
+                          onClick={() => {
+                            setCurrentProject(project);
+                            const currentChap = project.chapters[project.currentChapterIndex] || project.chapters[0];
+                            setCurrentChapter(currentChap);
+                            setEditorContent(currentChap.content);
+                            setChapterWordCount(currentChap.wordCount);
+                            setIsWriting(true);
+                          }}
+                          className="flex-grow cursor-pointer"
+                        >
+                          <div className="font-medium">{project.title}</div>
+                          <div className="text-sm text-gray-500">
+                            {project.genre} • {project.totalWords} words • {project.chapters.length} chapters
+                          </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="ml-2 text-red-500 hover:text-red-700"
+                          onClick={() => {
+                            setProjectToDelete(project.id);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -890,6 +929,34 @@ BEGIN CONTINUATION NOW:`;
             </div>
           </motion.div>
         </div>
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Are you sure you want to delete this project?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. This will permanently delete the project
+                and all its chapters.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (projectToDelete) {
+                    deleteProject(projectToDelete);
+                  }
+                  setIsDeleteDialogOpen(false);
+                  setProjectToDelete(null);
+                }}
+              >
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
