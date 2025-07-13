@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { apiService } from '@/services/api'
 import { generateId } from '@/lib/utils'
-import type { Message, Conversation } from '@/types'
+import type { Message } from '@/types'
 
 export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])

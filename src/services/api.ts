@@ -26,10 +26,6 @@ type ChatResponse = {
   };
 };
 
-// Function to count words in a string
-const countWords = (text: string): number => {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-};
 
 // Function to extract content from various response formats
 const extractContent = (response: unknown): string => {
