@@ -17,7 +17,9 @@ function StoryEngine() {
   const [projects, setProjects] = useState<StoryProject[]>([]);
   const [showIdeaSelector, setShowIdeaSelector] = useState(false);
   const [showProjectSelector, setShowProjectSelector] = useState(false);
-  const [currentView, setCurrentView] = useState<'brainstorming' | 'planning' | 'writing' | 'stats'>('brainstorming');
+  const [viewMode, setViewMode] = useState<'project' | 'stats'>('project');
+
+  const phaseOrder: ProjectPhase[] = ['brainstorming', 'planning', 'writing'];
 
   // Load projects from localStorage
   useEffect(() => {
@@ -67,36 +69,31 @@ function StoryEngine() {
     setCurrentProject(updatedProject);
   };
 
-  const renderCurrentPhase = () => {
+  const navigateToPhase = (phase: ProjectPhase) => {
+    if (!currentProject) return;
+    const currentPhaseIndex = phaseOrder.indexOf(currentProject.currentPhase);
+    const targetPhaseIndex = phaseOrder.indexOf(phase);
+
+    if (targetPhaseIndex <= currentPhaseIndex) {
+      setViewMode('project');
+      updateProject({ ...currentProject, currentPhase: phase });
+    }
+  };
+
+  const renderContent = () => {
     if (!currentProject) return null;
 
-    // Show stats view if selected
-    if (currentView === 'stats') {
+    if (viewMode === 'stats') {
       return <StoryEngineStats project={currentProject} />;
     }
 
     switch (currentProject.currentPhase) {
       case 'brainstorming':
-        return (
-          <BrainstormingMenu 
-            project={currentProject}
-            onUpdateProject={updateProject}
-          />
-        );
+        return <BrainstormingMenu project={currentProject} onUpdateProject={updateProject} />;
       case 'planning':
-        return (
-          <StoryPlanning 
-            project={currentProject}
-            onUpdateProject={updateProject}
-          />
-        );
+        return <StoryPlanning project={currentProject} onUpdateProject={updateProject} />;
       case 'writing':
-        return (
-          <StoryWriting 
-            project={currentProject}
-            onUpdateProject={updateProject}
-          />
-        );
+        return <StoryWriting project={currentProject} onUpdateProject={updateProject} />;
       default:
         return null;
     }
@@ -261,54 +258,32 @@ function StoryEngine() {
           {/* Phase Navigation */}
           <div className="flex items-center gap-2">
             <Button 
-              variant={currentProject?.currentPhase === 'brainstorming' && currentView !== 'stats' ? 'default' : 'outline'}
+              variant={currentProject?.currentPhase === 'brainstorming' && viewMode === 'project' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => {
-                setCurrentView('brainstorming');
-                if (currentProject) {
-                  updateProject({
-                    ...currentProject, 
-                    currentPhase: 'brainstorming'
-                  });
-                }
-              }}
+              onClick={() => navigateToPhase('brainstorming')}
             >
               Brainstorming
             </Button>
             <Button 
-              variant={currentProject?.currentPhase === 'planning' && currentView !== 'stats' ? 'default' : 'outline'}
+              variant={currentProject?.currentPhase === 'planning' && viewMode === 'project' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => {
-                setCurrentView('planning');
-                if (currentProject) {
-                  updateProject({
-                    ...currentProject, 
-                    currentPhase: 'planning'
-                  });
-                }
-              }}
+              disabled={phaseOrder.indexOf(currentProject.currentPhase) < phaseOrder.indexOf('planning')}
+              onClick={() => navigateToPhase('planning')}
             >
               Planning
             </Button>
             <Button 
-              variant={currentProject?.currentPhase === 'writing' && currentView !== 'stats' ? 'default' : 'outline'}
+              variant={currentProject?.currentPhase === 'writing' && viewMode === 'project' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => {
-                setCurrentView('writing');
-                if (currentProject) {
-                  updateProject({
-                    ...currentProject, 
-                    currentPhase: 'writing'
-                  });
-                }
-              }}
+              disabled={phaseOrder.indexOf(currentProject.currentPhase) < phaseOrder.indexOf('writing')}
+              onClick={() => navigateToPhase('writing')}
             >
               Writing
             </Button>
             <Button 
-              variant={currentView === 'stats' ? 'default' : 'outline'}
+              variant={viewMode === 'stats' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setCurrentView('stats')}
+              onClick={() => setViewMode('stats')}
             >
               <BarChart3 className="h-4 w-4 mr-1" />
               Stats
@@ -319,7 +294,7 @@ function StoryEngine() {
 
       {/* Main Content */}
       <div className="p-6">
-        {renderCurrentPhase()}
+        {renderContent()}
       </div>
     </div>
   );
