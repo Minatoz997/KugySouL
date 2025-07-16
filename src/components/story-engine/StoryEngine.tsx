@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { StoryProject } from '@/types/kugysoul';
+import { StoryProject, ProjectPhase } from '@/types/kugysoul';
 import { ProjectSelector } from './ProjectSelector';
 import { IdeaSelector } from './IdeaSelector';
 import { BrainstormingMenu } from './BrainstormingMenu';
