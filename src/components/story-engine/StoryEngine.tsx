@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { StoryProject, ProjectPhase } from '@/types/kugysoul';
+import { StoryProject } from '@/types/kugysoul';
 import { ProjectSelector } from './ProjectSelector';
 import { IdeaSelector } from './IdeaSelector';
 import { BrainstormingMenu } from './BrainstormingMenu';
@@ -19,7 +19,7 @@ function StoryEngine() {
   const [showProjectSelector, setShowProjectSelector] = useState(false);
   const [viewMode, setViewMode] = useState<'project' | 'stats'>('project');
 
-  const phaseOrder: ProjectPhase[] = ['brainstorming', 'planning', 'writing'];
+  const phaseOrder: ('brainstorming' | 'planning' | 'writing')[] = ['brainstorming', 'planning', 'writing'];
 
   // Load projects from localStorage
   useEffect(() => {
@@ -69,7 +69,7 @@ function StoryEngine() {
     setCurrentProject(updatedProject);
   };
 
-  const navigateToPhase = (phase: ProjectPhase) => {
+  const navigateToPhase = (phase: 'brainstorming' | 'planning' | 'writing') => {
     if (!currentProject) return;
     const currentPhaseIndex = phaseOrder.indexOf(currentProject.currentPhase);
     const targetPhaseIndex = phaseOrder.indexOf(phase);
