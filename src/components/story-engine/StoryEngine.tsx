@@ -267,7 +267,7 @@ function StoryEngine() {
             <Button 
               variant={currentProject?.currentPhase === 'planning' && viewMode === 'project' ? 'default' : 'outline'}
               size="sm"
-              disabled={phaseOrder.indexOf(currentProject.currentPhase) < phaseOrder.indexOf('planning')}
+              disabled={!currentProject || phaseOrder.indexOf(currentProject.currentPhase) < phaseOrder.indexOf('planning')}
               onClick={() => navigateToPhase('planning')}
             >
               Planning
@@ -275,7 +275,7 @@ function StoryEngine() {
             <Button 
               variant={currentProject?.currentPhase === 'writing' && viewMode === 'project' ? 'default' : 'outline'}
               size="sm"
-              disabled={phaseOrder.indexOf(currentProject.currentPhase) < phaseOrder.indexOf('writing')}
+              disabled={!currentProject || phaseOrder.indexOf(currentProject.currentPhase) < phaseOrder.indexOf('writing')}
               onClick={() => navigateToPhase('writing')}
             >
               Writing
